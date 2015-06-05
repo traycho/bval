@@ -46,9 +46,9 @@
     <url>http://bval.apache.org/</url>
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/bval/trunk</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/bval/trunk</developerConnection>
-        <url>http://svn.apache.org/repos/asf/bval/trunk</url>
+        <connection>scm:svn:http://svn.apache.org/repos/asf/bval/branches/bval-1.0.x</connection>
+        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/bval/branches/bval-1.0.x</developerConnection>
+        <url>http://svn.apache.org/repos/asf/bval/branches/bval-1.0.x</url>
     </scm>
 
     <mailingLists>
