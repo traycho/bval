@@ -130,7 +130,7 @@ public class XMLMetaElement extends XMLFeaturesCapable {
             prop.putFeature(HIDDEN, getHidden().booleanValue());
         }
         if (getMandatory() != null) {
-            prop.putFeature(MANDATORY, getMandatory().equals("true"));
+            prop.putFeature(MANDATORY, Boolean.valueOf(getMandatory()));
         }
         if (getMaxLength() != null) {
             prop.putFeature(MAX_LENGTH, getMaxLength());

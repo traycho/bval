@@ -57,28 +57,29 @@ public class MetaConstraint<T, A extends Annotation> {
         this.member = member;
         this.beanClass = beanClass;
         this.annotation = annotation;
-        if (member != null) {
+        if (member == null) {
+            this.accessStrategy = null;
+        } else {
             accessStrategy = createAccessStrategy(member);
             /*TODO: see if can really be removed
             if (accessStrategy == null || accessStrategy.getPropertyName() == null) { // can happen if method does not follow the bean convention
                 throw new ValidationException("Annotated method does not follow the JavaBeans naming convention: " + member);
             }
             */
-        } else {
-            this.accessStrategy = null;
         }
     }
 
     private static AccessStrategy createAccessStrategy(Member member) {
         if (member instanceof Method) {
             return new MethodAccess((Method) member);
-        } else if (member instanceof Field) {
-            return new FieldAccess((Field) member);
-        } else if (member instanceof Constructor<?>) {
-            return new ConstructorAccess((Constructor<?>) member);
-        } else {
-            return null; // class level
         }
+        if (member instanceof Field) {
+            return new FieldAccess((Field) member);
+        }
+        if (member instanceof Constructor<?>) {
+            return new ConstructorAccess((Constructor<?>) member);
+        }
+        return null; // class level
     }
 
     /**
@@ -118,6 +119,6 @@ public class MetaConstraint<T, A extends Annotation> {
     }
 
     public void setIndex(final int index) {
-        this.index = index;
+        this.index = Integer.valueOf(index);
     }
 }

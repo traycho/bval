@@ -54,7 +54,6 @@ public class NodeBuilderCustomizableContextImpl
     public ConstraintValidatorContext.ConstraintViolationBuilder.NodeBuilderCustomizableContext addPropertyNode(
         String name) {
         final NodeImpl node = new NodeImpl.PropertyNodeImpl(name);
-        node.setKind(ElementKind.PROPERTY);
         path.addNode(node);
         return this;
     }
@@ -62,7 +61,6 @@ public class NodeBuilderCustomizableContextImpl
     @Override
     public ConstraintValidatorContext.ConstraintViolationBuilder.LeafNodeBuilderCustomizableContext addBeanNode() {
         final NodeImpl node = new NodeImpl.BeanNodeImpl();
-        node.setKind(ElementKind.BEAN);
         path.addNode(node);
         return new LeafNodeBuilderCustomizableContextImpl(context, template, path);
     }

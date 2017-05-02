@@ -32,7 +32,7 @@ public interface ApacheValidatorConfiguration extends Configuration<ApacheValida
     /**
      * Proprietary property keys for {@link ConfigurationImpl}  
      */
-    public interface Properties {
+    interface Properties {
         /**
          * the location where to look for the validation.xml file.
          * default: "META-INF/validation.xml"

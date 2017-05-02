@@ -27,20 +27,18 @@ public class XMLMetaBeanURLLoader implements XMLMetaBeanLoader {
     private final URL url;
 
     public XMLMetaBeanURLLoader(URL url) {
-        if (url == null)
+        if (url == null) {
             throw new NullPointerException("URL required");
+        }
         this.url = url;
     }
 
     @Override
     public XMLMetaBeanInfos load() throws IOException {
-        InputStream stream = url.openStream();
-        try {
+        try (InputStream stream = url.openStream()) {
             XMLMetaBeanInfos beanInfos = (XMLMetaBeanInfos) XMLMapper.getInstance().getXStream().fromXML(stream);
             beanInfos.setId(url.toExternalForm());
             return beanInfos;
-        } finally {
-            stream.close();
         }
     }
 }

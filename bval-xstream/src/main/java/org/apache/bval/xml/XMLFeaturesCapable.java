@@ -22,6 +22,7 @@ import org.apache.bval.model.FeaturesCapable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Description: <br/>
@@ -44,36 +45,31 @@ public class XMLFeaturesCapable implements Serializable {
     }
 
     public void putFeature(String key, Object value) {
-        XMLMetaFeature anno = findFeature(key);
-        if (features == null)
-            features = new ArrayList<XMLMetaFeature>();
-        if (anno == null) {
-            features.add(new XMLMetaFeature(key, value));
+        if (features == null) {
+            features = new ArrayList<>();
+        }
+        Optional<XMLMetaFeature> anno = findFeature(key);
+        if (anno.isPresent()) {
+            anno.get().setValue(value);
         } else {
-            anno.setValue(value);
+            features.add(new XMLMetaFeature(key, value));
         }
     }
 
     public void removeFeature(String key) {
-        XMLMetaFeature anno = findFeature(key);
-        if (anno != null) {
-            getFeatures().remove(anno);
+        Optional<XMLMetaFeature> anno = findFeature(key);
+        if (anno.isPresent()) {
+            getFeatures().remove(anno.get());
         }
     }
 
     public Object getFeature(String key) {
-        XMLMetaFeature anno = findFeature(key);
-        return anno == null ? null : anno.getValue();
+        return findFeature(key).map(XMLMetaFeature::getValue).orElse(null);
     }
 
-    private XMLMetaFeature findFeature(String key) {
-        if (features == null)
-            return null;
-        for (XMLMetaFeature anno : features) {
-            if (key.equals(anno.getKey()))
-                return anno;
-        }
-        return null;
+    private Optional<XMLMetaFeature> findFeature(String key) {
+        return features == null ? Optional.empty()
+            : features.stream().filter(anno -> key.equals(anno.getKey())).findFirst();
     }
 
     public List<XMLMetaValidatorReference> getValidators() {
@@ -85,8 +81,9 @@ public class XMLFeaturesCapable implements Serializable {
     }
 
     public void addValidator(String validatorId) {
-        if (validators == null)
-            validators = new ArrayList<XMLMetaValidatorReference>();
+        if (validators == null) {
+            validators = new ArrayList<>();
+        }
         validators.add(new XMLMetaValidatorReference(validatorId));
     }
 

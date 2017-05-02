@@ -43,6 +43,7 @@ public class FutureValidatorForCalendar implements ConstraintValidator<Future, C
      * @return current date/time
      */
     protected Calendar now() {
+        // TODO use Clock
         return Calendar.getInstance();
     }
 }

@@ -61,8 +61,7 @@ public final class NodeBuilderDefinedContextImpl
 
     @Override
     public ConstraintValidatorContext.ConstraintViolationBuilder.LeafNodeBuilderCustomizableContext addBeanNode() {
-        final NodeImpl node = new NodeImpl((String) null);
-        node.setKind(ElementKind.BEAN);
+        final NodeImpl node = new NodeImpl.BeanNodeImpl();
         propertyPath.addNode(node);
         return new LeafNodeBuilderCustomizableContextImpl(parent, messageTemplate, propertyPath);
     }

@@ -51,7 +51,7 @@ public class IntrospectorMetaBeanFactory implements MetaBeanFactory {
             meta.setName(info.getBeanDescriptor().getName()); // (display?)name = simple class name!
         }
         for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-            if (!(pd instanceof IndexedPropertyDescriptor || pd.getName().equals("class"))) {
+            if (!(pd instanceof IndexedPropertyDescriptor || "class".equals(pd.getName()))) {
                 MetaProperty metaProp = buildMetaProperty(pd, meta.getProperty(pd.getName()));
                 meta.putProperty(pd.getName(), metaProp);
             }

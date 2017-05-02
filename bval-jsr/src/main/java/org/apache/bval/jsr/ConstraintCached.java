@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public class ConstraintCached {
     private final Map<Class<? extends Annotation>, Class<? extends ConstraintValidator<?, ?>>[]> classes =
-        new HashMap<Class<? extends Annotation>, Class<? extends ConstraintValidator<?, ?>>[]>();
+        new HashMap<>();
 
     /**
      * Record the set of validator classes for a given constraint annotation.

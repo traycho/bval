@@ -18,14 +18,20 @@
  */
 package org.apache.bval.jsr.parameter;
 
-import javax.validation.ParameterNameProvider;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import javax.validation.ParameterNameProvider;
 
 public class DefaultParameterNameProvider implements ParameterNameProvider {
     private static final String ARG = "arg";
+
+    private static List<String> names(final int length) {
+        return IntStream.range(0, length).mapToObj(i -> ARG + i).collect(Collectors.toList());
+    }
 
     @Override
     public List<String> getParameterNames(Constructor<?> constructor) {
@@ -35,13 +41,5 @@ public class DefaultParameterNameProvider implements ParameterNameProvider {
     @Override
     public List<String> getParameterNames(Method method) {
         return names(method.getParameterTypes().length);
-    }
-
-    private static List<String> names(final int length) {
-        final List<String> list = new ArrayList<String>();
-        for (int i = 0; i < length; i++) {
-            list.add(ARG + i);
-        }
-        return list;
     }
 }

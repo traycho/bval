@@ -61,10 +61,12 @@ public class StandardValidation implements Validation {
 
     protected <T extends ValidationListener> void validateTimeLag(ValidationContext<T> context) {
         String lag = (String) context.getMetaProperty().getFeature(TIME_LAG);
-        if (lag == null)
+        if (lag == null) {
             return;
-        if (context.getPropertyValue() == null)
+        }
+        if (context.getPropertyValue() == null) {
             return;
+        }
         long date = ((Date) context.getPropertyValue()).getTime();
         long now = System.currentTimeMillis();
         if (XMLMetaValue.TIMELAG_Future.equals(lag)) {
@@ -85,10 +87,12 @@ public class StandardValidation implements Validation {
     protected <T extends ValidationListener> void validateRegExp(ValidationContext<T> context) {
         final MetaProperty meta = context.getMetaProperty();
         final String regExp = (String) meta.getFeature(REG_EXP);
-        if (regExp == null)
+        if (regExp == null) {
             return;
-        if (context.getPropertyValue() == null)
+        }
+        if (context.getPropertyValue() == null) {
             return;
+        }
 
         final String value = String.valueOf(context.getPropertyValue());
         try {
@@ -118,8 +122,9 @@ public class StandardValidation implements Validation {
     protected <T extends ValidationListener> void validateMaxValue(ValidationContext<T> context) {
         @SuppressWarnings("unchecked")
         Comparable<Object> maxValue = (Comparable<Object>) context.getMetaProperty().getFeature(MAX_VALUE);
-        if (maxValue == null || context.getPropertyValue() == null)
+        if (maxValue == null || context.getPropertyValue() == null) {
             return;
+        }
         if (compare(context, maxValue, context.getPropertyValue()) < 0) {
             context.getListener().addError(MAX_VALUE, context);
         }
@@ -142,17 +147,21 @@ public class StandardValidation implements Validation {
 
     protected <T extends ValidationListener> void validateMaxLength(ValidationContext<T> context) {
         Integer maxLength = (Integer) context.getMetaProperty().getFeature(Features.Property.MAX_LENGTH);
-        if (maxLength == null)
+        if (maxLength == null) {
             return;
-        if (context.getPropertyValue() == null)
+        }
+        if (context.getPropertyValue() == null) {
             return;
+        }
 
         final Object value = context.getPropertyValue();
-        int length = 0;
+        int length;
         if (value instanceof String) {
             length = ((String) value).length();
         } else if (value instanceof Collection<?>) {
             length = ((Collection<?>) value).size();
+        } else {
+            length = 0;
         }
         if (length > maxLength) {
             context.getListener().addError(MAX_LENGTH, context);
@@ -161,17 +170,21 @@ public class StandardValidation implements Validation {
 
     protected <T extends ValidationListener> void validateMinLength(ValidationContext<T> context) {
         Integer maxLength = (Integer) context.getMetaProperty().getFeature(Features.Property.MIN_LENGTH);
-        if (maxLength == null)
+        if (maxLength == null) {
             return;
-        if (context.getPropertyValue() == null)
+        }
+        if (context.getPropertyValue() == null) {
             return;
+        }
 
         final Object value = context.getPropertyValue();
-        int length = 0;
+        int length;
         if (value instanceof String) {
             length = ((String) value).length();
         } else if (value instanceof Collection<?>) {
             length = ((Collection<?>) value).size();
+        } else {
+            length = 0;
         }
         if (length < maxLength) {
             context.getListener().addError(MIN_LENGTH, context);
@@ -179,10 +192,8 @@ public class StandardValidation implements Validation {
     }
 
     protected <T extends ValidationListener> void validateMandatory(ValidationContext<T> context) {
-        if (context.getMetaProperty().isMandatory()) {
-            if (context.getPropertyValue() == null) {
-                context.getListener().addError(MANDATORY, context);
-            }
+        if (context.getMetaProperty().isMandatory() && context.getPropertyValue() == null) {
+            context.getListener().addError(MANDATORY, context);
         }
     }
 

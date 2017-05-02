@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.apache.bval.util.reflection.Reflection;
@@ -44,9 +45,9 @@ public class MetaBean extends FeaturesCapable implements Cloneable, Features.Bea
     private String name;
     private Class<?> beanClass;
 
-    private Map<String, MetaProperty> properties = null;
-    private Map<Method, MetaMethod> methods = null;
-    private Map<Constructor<?>, MetaConstructor> constructors = null;
+    private SortedMap<String, MetaProperty> properties;
+    private Map<Method, MetaMethod> methods;
+    private Map<Constructor<?>, MetaConstructor> constructors;
 
     /**
      * Get the id.
@@ -109,15 +110,15 @@ public class MetaBean extends FeaturesCapable implements Cloneable, Features.Bea
             final Map<Method, MetaMethod> oldMethods = methods;
             final Map<Constructor<?>, MetaConstructor> oldConstructors = constructors;
 
-            properties = new TreeMap<String, MetaProperty>(new FieldComparator(beanClass));
+            properties = new TreeMap<>(new FieldComparator(beanClass));
             if (oldProperties != null) {
                 properties.putAll(oldProperties);
             }
-            methods = new TreeMap<Method, MetaMethod>(new MethodComparator(beanClass));
+            methods = new TreeMap<>(new MethodComparator(beanClass));
             if (oldMethods != null) {
                 methods.putAll(oldMethods);
             }
-            constructors = new TreeMap<Constructor<?>, MetaConstructor>(new ConstructorComparator(beanClass));
+            constructors = new TreeMap<>(new ConstructorComparator(beanClass));
             if (oldConstructors != null) {
                 constructors.putAll(oldConstructors);
             }
@@ -145,14 +146,14 @@ public class MetaBean extends FeaturesCapable implements Cloneable, Features.Bea
 
     public void addMethod(final Method method, final MetaMethod meta) {
         if (methods == null) {
-            methods = new HashMap<Method, MetaMethod>();
+            methods = new HashMap<>();
         }
         methods.put(method, meta);
     }
 
     public void addConstructor(final Constructor<?> constructor, final MetaConstructor meta) {
         if (constructors == null) {
-            constructors = new HashMap<Constructor<?>, MetaConstructor>();
+            constructors = new HashMap<>();
         }
         constructors.put(constructor, meta);
     }
@@ -164,10 +165,20 @@ public class MetaBean extends FeaturesCapable implements Cloneable, Features.Bea
      *            the MetaProperty[] to set
      */
     public void setProperties(MetaProperty[] properties) {
-        this.properties = new HashMap<String, MetaProperty>();
-        for (final MetaProperty property : properties) {
-            this.properties.put(property.getName(), property);
+        initProperties();
+        for (MetaProperty mp : properties) {
+            this.properties.put(mp.getName(), mp);
         }
+    }
+
+    private SortedMap<String, MetaProperty> initProperties() {
+        synchronized (this) {
+            if (properties == null) {
+                properties = new TreeMap<>(
+                    beanClass == null ? Comparator.<String> naturalOrder() : new FieldComparator(beanClass));
+            }
+        }
+        return properties;
     }
 
     /**
@@ -177,10 +188,7 @@ public class MetaBean extends FeaturesCapable implements Cloneable, Features.Bea
      * @return MetaProperty found or <code>null</code>
      */
     public MetaProperty getProperty(String name) {
-        if (properties == null) {
-            return null;
-        }
-        return this.properties.get(name);
+        return properties == null ? null : this.properties.get(name);
     }
 
     /**
@@ -190,15 +198,7 @@ public class MetaBean extends FeaturesCapable implements Cloneable, Features.Bea
      * @return true when at least one of the properties is a relationship
      */
     public boolean hasRelationships() {
-        if (properties == null) {
-            return false;
-        }
-        for (MetaProperty property : this.properties.values()) {
-            if (property.isRelationship()) {
-                return true;
-            }
-        }
-        return false;
+        return properties != null && properties.values().stream().anyMatch(MetaProperty::isRelationship);
     }
 
     /**
@@ -209,9 +209,7 @@ public class MetaBean extends FeaturesCapable implements Cloneable, Features.Bea
      *            if <code>null</code>, remove
      */
     public void putProperty(String name, MetaProperty property) {
-        if (properties == null) {
-            properties = new HashMap<String, MetaProperty>();
-        }
+        initProperties();
         if (property == null) {
             this.properties.remove(name);
         } else {
@@ -225,7 +223,8 @@ public class MetaBean extends FeaturesCapable implements Cloneable, Features.Bea
      */
     @Override
     public String toString() {
-        return "MetaBean{" + "id='" + id + '\'' + ", name='" + name + '\'' + ", beanClass=" + beanClass + '}';
+        return String.format("%s{id='%s', name='%s', beanClass=%s", MetaBean.class.getSimpleName(), id, name,
+            beanClass);
     }
 
     /**
@@ -236,10 +235,9 @@ public class MetaBean extends FeaturesCapable implements Cloneable, Features.Bea
         super.copyInto(target);
         final MetaBean copy = (MetaBean) target;
         if (properties != null) {
-            copy.properties = new TreeMap<String, MetaProperty>();
-            for (Map.Entry<String, MetaProperty> entry : properties.entrySet()) {
-                copy.properties.put(entry.getKey(), (MetaProperty) entry.getValue().copy());
-            }
+            copy.properties = null;
+            copy.initProperties();
+            properties.forEach((k, v) -> copy.properties.put(k, v.copy()));
         }
     }
 
@@ -272,7 +270,7 @@ public class MetaBean extends FeaturesCapable implements Cloneable, Features.Bea
     }
 
     protected static class FieldComparator implements Comparator<String> {
-        private final Map<String, Integer> fields = new HashMap<String, Integer>();
+        private final Map<String, Integer> fields = new HashMap<>();
 
         protected FieldComparator(final Class<?> beanClass) {
             int i = 0;
@@ -333,7 +331,7 @@ public class MetaBean extends FeaturesCapable implements Cloneable, Features.Bea
     }
 
     protected static class MethodComparator implements Comparator<Method> {
-        private final Map<Method, Integer> methods = new HashMap<Method, Integer>();
+        private final Map<Method, Integer> methods = new HashMap<>();
 
         protected MethodComparator(final Class<?> beanClass) {
             Class<?> clazz = beanClass;
@@ -357,7 +355,7 @@ public class MetaBean extends FeaturesCapable implements Cloneable, Features.Bea
     }
 
     protected static class ConstructorComparator implements Comparator<Constructor<?>> {
-        private final Map<Constructor<?>, Integer> constructors = new HashMap<Constructor<?>, Integer>();
+        private final Map<Constructor<?>, Integer> constructors = new HashMap<>();
 
         protected ConstructorComparator(final Class<?> beanClass) {
             for (final Constructor<?> c : Reflection.getDeclaredConstructors(beanClass)) {

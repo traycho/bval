@@ -37,7 +37,7 @@ public class ValidationResultsTest {
     @Test
     public void testValidationResults() throws Exception {
         assertTrue(results.isEmpty());
-        BeanValidationContext<ValidationResults> ctx = new BeanValidationContext<ValidationResults>(results);
+        BeanValidationContext<ValidationResults, Object, Boolean> ctx = new BeanValidationContext<>(results);
         ctx.setBean(this);
         ctx.setMetaProperty(new MetaProperty());
         ctx.getMetaProperty().setName("prop");

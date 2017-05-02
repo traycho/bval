@@ -89,7 +89,7 @@ public class ApacheValidatorFactory implements ValidatorFactory, Cloneable {
     private final ConcurrentMap<Class<?>, List<AccessStrategy>> validAccesses;
     private final ConcurrentMap<Class<?>, List<MetaConstraint<?, ? extends Annotation>>> constraintMap;
 
-    private final Collection<Closeable> toClose = new ArrayList<Closeable>();
+    private final Collection<Closeable> toClose = new ArrayList<>();
     private final MetaBeanFinder defaultMetaBeanFinder;
 
     /**
@@ -112,7 +112,7 @@ public class ApacheValidatorFactory implements ValidatorFactory, Cloneable {
      * @return a new instance of MetaBeanManager with adequate MetaBeanFactories
      */
     protected MetaBeanFinder buildMetaBeanFinder() {
-        final List<MetaBeanFactory> builders = new ArrayList<MetaBeanFactory>();
+        final List<MetaBeanFactory> builders = new ArrayList<>();
         if (Boolean.parseBoolean(getProperties().get(ApacheValidatorConfiguration.Properties.ENABLE_INTROSPECTOR))) {
             builders.add(new IntrospectorMetaBeanFactory());
         }
@@ -121,9 +121,8 @@ public class ApacheValidatorFactory implements ValidatorFactory, Cloneable {
         if (factoryClassNames != null) {
             for (String clsName : factoryClassNames) {
                 // cast, relying on #createMetaBeanFactory to throw the exception if incompatible:
-                @SuppressWarnings("unchecked")
                 final Class<? extends MetaBeanFactory> factoryClass =
-                    (Class<? extends MetaBeanFactory>) loadClass(clsName);
+                    loadClass(clsName).asSubclass(MetaBeanFactory.class);
                 builders.add(createMetaBeanFactory(factoryClass));
             }
         }
@@ -173,10 +172,10 @@ public class ApacheValidatorFactory implements ValidatorFactory, Cloneable {
      * Create a new ApacheValidatorFactory instance.
      */
     public ApacheValidatorFactory(ConfigurationState configuration) {
-        properties = new HashMap<String, String>(configuration.getProperties());
-        defaultSequences = new HashMap<Class<?>, Class<?>[]>();
-        validAccesses = new ConcurrentHashMap<Class<?>, List<AccessStrategy>>();
-        constraintMap = new ConcurrentHashMap<Class<?>, List<MetaConstraint<?, ? extends Annotation>>>();
+        properties = new HashMap<>(configuration.getProperties());
+        defaultSequences = new HashMap<>();
+        validAccesses = new ConcurrentHashMap<>();
+        constraintMap = new ConcurrentHashMap<>();
 
         parameterNameProvider = configuration.getParameterNameProvider();
         messageResolver = configuration.getMessageInterpolator();
@@ -184,8 +183,7 @@ public class ApacheValidatorFactory implements ValidatorFactory, Cloneable {
         constraintValidatorFactory = configuration.getConstraintValidatorFactory();
 
         if (ConfigurationImpl.class.isInstance(configuration)) {
-            final ConfigurationImpl impl = ConfigurationImpl.class.cast(configuration);
-            toClose.add(impl.getClosable());
+            toClose.add(ConfigurationImpl.class.cast(configuration).getClosable());
         }
 
         new ValidationMappingParser(this).processMappingConfig(configuration.getMappingStreams());
@@ -401,7 +399,7 @@ public class ApacheValidatorFactory implements ValidatorFactory, Cloneable {
     public void addMetaConstraint(final Class<?> beanClass, final MetaConstraint<?, ?> metaConstraint) {
         List<MetaConstraint<?, ? extends Annotation>> slot = constraintMap.get(beanClass);
         if (slot == null) {
-            slot = new ArrayList<MetaConstraint<?, ? extends Annotation>>();
+            slot = new ArrayList<>();
             final List<MetaConstraint<?, ? extends Annotation>> old = constraintMap.putIfAbsent(beanClass, slot);
             if (old != null) {
                 slot = old;
@@ -420,7 +418,7 @@ public class ApacheValidatorFactory implements ValidatorFactory, Cloneable {
     public void addValid(Class<?> beanClass, AccessStrategy accessStrategy) {
         List<AccessStrategy> slot = validAccesses.get(beanClass);
         if (slot == null) {
-            slot = new ArrayList<AccessStrategy>();
+            slot = new ArrayList<>();
             final List<AccessStrategy> old = validAccesses.putIfAbsent(beanClass, slot);
             if (old != null) {
                 slot = old;
@@ -468,7 +466,7 @@ public class ApacheValidatorFactory implements ValidatorFactory, Cloneable {
      */
     public List<AccessStrategy> getValidAccesses(Class<?> beanClass) {
         final List<AccessStrategy> slot = validAccesses.get(beanClass);
-        return slot == null ? Collections.<AccessStrategy> emptyList() : Collections.unmodifiableList(slot);
+        return slot == null ? Collections.emptyList() : Collections.unmodifiableList(slot);
     }
 
     /**

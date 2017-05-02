@@ -89,9 +89,7 @@ public class MethodAccess extends AccessStrategy {
         final boolean mustUnset = Reflection.setAccessible(method, true);
         try {
             return method.invoke(instance);
-        } catch (IllegalAccessException e) {
-            throw new IllegalArgumentException(e);
-        } catch (InvocationTargetException e) {
+        } catch (IllegalAccessException | InvocationTargetException e) {
             throw new IllegalArgumentException(e);
         } finally {
             if (mustUnset) {
@@ -132,7 +130,7 @@ public class MethodAccess extends AccessStrategy {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (o == null || !getClass().equals(o.getClass())) {
             return false;
         }
 

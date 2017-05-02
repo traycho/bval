@@ -36,12 +36,6 @@ public class MetaProperty extends Meta implements Cloneable, Features.Property {
     private MetaBean metaBean;
 
     /**
-     * Create a new MetaProperty instance.
-     */
-    public MetaProperty() {
-    }
-
-    /**
      * Get the metabean of the target bean (mainly for relationships).
      * @return MetaBean (may be null).
      */
@@ -116,7 +110,7 @@ public class MetaProperty extends Meta implements Cloneable, Features.Property {
      * @see {@link Features.Property#MANDATORY}
      */
     public boolean isMandatory() {
-        return getFeature(MANDATORY, Boolean.FALSE).booleanValue();
+        return Boolean.TRUE.equals(getFeature(MANDATORY));
     }
 
     /**
@@ -159,6 +153,6 @@ public class MetaProperty extends Meta implements Cloneable, Features.Property {
      */
     @Override
     public String toString() {
-        return "MetaProperty{" + "name='" + name + '\'' + ", type=" + type + '}';
+        return String.format("%s{name='%s', type=%s}", MetaProperty.class.getSimpleName(), name, type);
     }
 }

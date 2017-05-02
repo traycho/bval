@@ -16,15 +16,15 @@
  */
 package org.apache.bval.jsr.xml;
 
-import javax.validation.Valid;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
+
+import javax.validation.Valid;
 
 /**
  * Description: <br/>
@@ -38,7 +38,7 @@ class AnnotationProxy implements Annotation, InvocationHandler, Serializable {
     private static final long serialVersionUID = 1L;
 
     private final Class<? extends Annotation> annotationType;
-    private final Map<String, Object> values;
+    private final SortedMap<String, Object> values;
 
     /**
      * Create a new AnnotationProxy instance.
@@ -48,26 +48,21 @@ class AnnotationProxy implements Annotation, InvocationHandler, Serializable {
      */
     public <A extends Annotation> AnnotationProxy(AnnotationProxyBuilder<A> descriptor) {
         this.annotationType = descriptor.getType();
-        values = getAnnotationValues(descriptor);
-    }
-
-    private <A extends Annotation> Map<String, Object> getAnnotationValues(AnnotationProxyBuilder<A> descriptor) {
-        final Map<String, Object> result = new HashMap<String, Object>();
+        values = new TreeMap<>();
         int processedValuesFromDescriptor = 0;
         for (final Method m : descriptor.getMethods()) {
             if (descriptor.contains(m.getName())) {
-                result.put(m.getName(), descriptor.getValue(m.getName()));
+                values.put(m.getName(), descriptor.getValue(m.getName()));
                 processedValuesFromDescriptor++;
             } else if (m.getDefaultValue() != null) {
-                result.put(m.getName(), m.getDefaultValue());
+                values.put(m.getName(), m.getDefaultValue());
             } else {
                 throw new IllegalArgumentException("No value provided for " + m.getName());
             }
         }
         if (processedValuesFromDescriptor != descriptor.size() && !Valid.class.equals(annotationType)) {
-            throw new RuntimeException("Trying to instanciate " + annotationType + " with unknown paramters.");
+            throw new RuntimeException("Trying to instantiate " + annotationType + " with unknown paramters.");
         }
-        return result;
     }
 
     /**
@@ -94,22 +89,7 @@ class AnnotationProxy implements Annotation, InvocationHandler, Serializable {
      */
     @Override
     public String toString() {
-        StringBuilder result = new StringBuilder();
-        result.append('@').append(annotationType().getName()).append('(');
-        boolean comma = false;
-        for (String m : getMethodsSorted()) {
-            if (comma)
-                result.append(", ");
-            result.append(m).append('=').append(values.get(m));
-            comma = true;
-        }
-        result.append(")");
-        return result.toString();
-    }
-
-    private SortedSet<String> getMethodsSorted() {
-        SortedSet<String> result = new TreeSet<String>();
-        result.addAll(values.keySet());
-        return result;
+        return values.entrySet().stream().map(e -> String.format("%s=%s", e.getKey(), e.getValue()))
+            .collect(Collectors.joining(", ", String.format("@%s(", annotationType().getName()), ")"));
     }
 }

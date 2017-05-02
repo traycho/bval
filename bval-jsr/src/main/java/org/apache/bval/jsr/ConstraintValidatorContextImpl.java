@@ -39,7 +39,7 @@ import java.util.List;
  * a {@link ConstraintValidation} to its adapted {@link ConstraintValidator}. <br/>
  */
 public class ConstraintValidatorContextImpl implements ConstraintValidatorContext {
-    private final List<ValidationListener.Error> errorMessages = new LinkedList<ValidationListener.Error>();
+    private final List<ValidationListener.Error> errorMessages = new LinkedList<>();
 
     private final ConstraintValidation<?> constraintDescriptor;
     private final GroupValidationContext<?> validationContext;
@@ -126,26 +126,23 @@ public class ConstraintValidatorContextImpl implements ConstraintValidatorContex
         @Override
         public NodeBuilderCustomizableContext addPropertyNode(String name) {
             final NodeImpl node;
-            if (!propertyPath.isRootPath()) {
-                if (propertyPath.getLeafNode().getKind() != null) {
-                    node = new NodeImpl.PropertyNodeImpl(name);
-                    propertyPath.addNode(node);
-                } else {
-                    node = propertyPath.getLeafNode();
-                }
+            if (propertyPath.isRootPath()) {
+                node = new NodeImpl.PropertyNodeImpl(name);
+                propertyPath.addNode(node);
+            } else if (propertyPath.getLeafNode().getKind() == null) {
+                node = propertyPath.getLeafNode();
+                node.setName(name);
+                node.setKind(ElementKind.PROPERTY);
             } else {
                 node = new NodeImpl.PropertyNodeImpl(name);
                 propertyPath.addNode(node);
             }
-            node.setName(name);
-            node.setKind(ElementKind.PROPERTY); // enforce it
             return new NodeBuilderCustomizableContextImpl(parent, messageTemplate, propertyPath);
         }
 
         @Override
         public LeafNodeBuilderCustomizableContext addBeanNode() {
             final NodeImpl node = new NodeImpl.BeanNodeImpl();
-            node.setKind(ElementKind.BEAN);
             propertyPath.addNode(node);
             return new LeafNodeBuilderCustomizableContextImpl(parent, messageTemplate, propertyPath);
         }
@@ -157,7 +154,6 @@ public class ConstraintValidatorContextImpl implements ConstraintValidatorContex
                 parent.validationContext.getParameterNameProvider().getParameterNames(method);
             final NodeImpl node = new NodeImpl.ParameterNodeImpl(parameters.get(index), index);
             node.setParameterIndex(index);
-            node.setKind(ElementKind.PARAMETER);
             if (!propertyPath.isRootPath()) {
                 propertyPath.removeLeafNode();
             }
@@ -185,7 +181,7 @@ public class ConstraintValidatorContextImpl implements ConstraintValidatorContex
                 "At least one custom message must be created if the default error message gets disabled.");
         }
 
-        List<ValidationListener.Error> returnedErrorMessages = new ArrayList<ValidationListener.Error>(errorMessages);
+        List<ValidationListener.Error> returnedErrorMessages = new ArrayList<>(errorMessages);
         if (!defaultDisabled) {
             returnedErrorMessages.add(new ValidationListener.Error(getDefaultConstraintMessageTemplate(),
                 validationContext.getPropertyPath(), null));

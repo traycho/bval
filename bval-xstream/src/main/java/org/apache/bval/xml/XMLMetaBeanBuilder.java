@@ -24,6 +24,7 @@ import org.apache.bval.model.MetaBean;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Description: <br>
@@ -39,11 +40,11 @@ public class XMLMetaBeanBuilder extends MetaBeanBuilder {
     }
 
     public XMLMetaBeanBuilder() {
-        setFactories(new MetaBeanFactory[] { new IntrospectorMetaBeanFactory(), new XMLMetaBeanFactory() });
+        setFactories(new IntrospectorMetaBeanFactory(), new XMLMetaBeanFactory());
     }
 
     @Override
-    public void setFactories(MetaBeanFactory[] factories) {
+    public void setFactories(MetaBeanFactory... factories) {
         super.setFactories(factories);
         updateXmlFactory();
     }
@@ -114,13 +115,14 @@ public class XMLMetaBeanBuilder extends MetaBeanBuilder {
     public Map<String, MetaBean> enrichCopies(Map<String, MetaBean> all, XMLMetaBeanInfos... infosArray)
         throws Exception {
         assertXmlFactory();
-        final Map<String, MetaBean> copies = new HashMap<String, MetaBean>(all.size());
+        final Map<String, MetaBean> copies = new HashMap<>(all.size());
         boolean nothing = true;
         XMLMetaBeanFactory.XMLResult carrier = new XMLMetaBeanFactory.XMLResult();
         for (XMLMetaBeanInfos xmlMetaBeanInfos : infosArray) {
             carrier.xmlInfos = xmlMetaBeanInfos;
-            if (xmlMetaBeanInfos == null)
+            if (xmlMetaBeanInfos == null) {
                 continue;
+            }
             try {
                 for (XMLMetaBean xmlMeta : xmlMetaBeanInfos.getBeans()) {
                     nothing = false;
@@ -141,8 +143,9 @@ public class XMLMetaBeanBuilder extends MetaBeanBuilder {
                 xmlFactory.handleLoadException(xmlMetaBeanInfos, e);
             }
         }
-        if (nothing)
+        if (nothing) {
             return all;
+        }
         for (Map.Entry<String, MetaBean> entry : all.entrySet()) {
             /*
              * alle unveraenderten werden AUCH KOPIERT (nur zwar nur, wegen
@@ -150,7 +153,7 @@ public class XMLMetaBeanBuilder extends MetaBeanBuilder {
              */
             if (!copies.containsKey(entry.getKey())) {
                 if (entry.getValue().hasRelationships()) {
-                    copies.put(entry.getKey(), (MetaBean) entry.getValue().copy());
+                    copies.put(entry.getKey(), entry.getValue().copy());
                 } else { // no relationship: do not clone()
                     copies.put(entry.getKey(), entry.getValue());
                 }
@@ -164,13 +167,8 @@ public class XMLMetaBeanBuilder extends MetaBeanBuilder {
     }
 
     private void updateXmlFactory() {
-        for (MetaBeanFactory each : getFactories()) {
-            if (each instanceof XMLMetaBeanFactory) { // use the first one!
-                xmlFactory = (XMLMetaBeanFactory) each;
-                return;
-            }
-        }
-        xmlFactory = null; // none
+        xmlFactory = Stream.of(getFactories()).filter(XMLMetaBeanFactory.class::isInstance)
+            .map(XMLMetaBeanFactory.class::cast).findFirst().orElse(null);
     }
 
     public XMLMetaBeanFactory getXmlFactory() {

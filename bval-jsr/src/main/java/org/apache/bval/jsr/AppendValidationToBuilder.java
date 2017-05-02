@@ -55,7 +55,7 @@ public class AppendValidationToBuilder extends BaseAppendValidation {
         // Inherited groups and payload values must also be replicated in the 
         // annotation, so it has to be substituted with a new proxy.
         final T originalAnnot = validation.getAnnotation();
-        final AnnotationProxyBuilder<T> apb = new AnnotationProxyBuilder<T>(originalAnnot);
+        final AnnotationProxyBuilder<T> apb = new AnnotationProxyBuilder<>(originalAnnot);
         apb.putValue(ConstraintAnnotationAttributes.GROUPS.getAttributeName(),
             inheritedGroups.toArray(new Class[inheritedGroups.size()]));
         apb.putValue(ConstraintAnnotationAttributes.PAYLOAD.getAttributeName(),

@@ -25,7 +25,7 @@ import org.apache.bval.util.ObjectUtils;
 public abstract class MetaAnnotated extends Meta {
     private static final long serialVersionUID = 1L;
 
-    private Set<Annotation> annotations = new HashSet<Annotation>();
+    private Set<Annotation> annotations = new HashSet<>();
     private Annotation[] annArray = null;
 
     public Annotation[] getAnnotations() {

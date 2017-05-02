@@ -97,7 +97,7 @@ public class FieldAccess extends AccessStrategy {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (o == null || !getClass().equals(o.getClass())) {
             return false;
         }
 

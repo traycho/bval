@@ -16,6 +16,8 @@
  */
 package org.apache.bval.model;
 
+import java.util.stream.Stream;
+
 /**
  * Description: ("artificial" enum with custom values).<br/>
  */
@@ -46,11 +48,7 @@ public class DynaTypeEnum implements DynaType {
      * @param names
      */
     public void setEnumNames(String[] names) {
-        enumConstants = new Value[names.length];
-        int i = 0;
-        for (String each : names) {
-            enumConstants[i++] = new Value(each);
-        }
+        enumConstants = Stream.of(names).map(Value::new).toArray(Value[]::new);
     }
 
     /**
@@ -83,7 +81,7 @@ public class DynaTypeEnum implements DynaType {
      * @return Value[]
      */
     public Value[] getEnumConstants() {
-        return enumConstants != null ? enumConstants.clone() : null;
+        return enumConstants == null ? null : enumConstants.clone();
     }
 
     /**

@@ -45,8 +45,7 @@ final class NodeBuilderCustomizableContextImpl
         parent = contextImpl;
         messageTemplate = template;
         propertyPath = path;
-        node = new NodeImpl(name);
-        node.setKind(ElementKind.PROPERTY);
+        node = new NodeImpl.PropertyNodeImpl(name);
     }
 
     /**
@@ -74,15 +73,13 @@ final class NodeBuilderCustomizableContextImpl
         String name) {
         propertyPath.addNode(node);
         node = new NodeImpl.PropertyNodeImpl(name);
-        node.setKind(ElementKind.PROPERTY);
-        return null;
+        return this;
     }
 
     @Override
     public ConstraintValidatorContext.ConstraintViolationBuilder.LeafNodeBuilderCustomizableContext addBeanNode() {
         propertyPath.addNode(node);
-        node = new NodeImpl((String) null);
-        node.setKind(ElementKind.BEAN);
+        node = new NodeImpl.BeanNodeImpl();
         return new LeafNodeBuilderCustomizableContextImpl(parent, messageTemplate, propertyPath);
     }
 

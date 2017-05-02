@@ -21,22 +21,18 @@ package org.apache.bval.jsr.util;
 import org.apache.bval.jsr.ConstraintValidatorContextImpl;
 
 import javax.validation.ConstraintValidatorContext;
-import javax.validation.ElementKind;
 
 public class LeafNodeBuilderCustomizableContextImpl
     implements ConstraintValidatorContext.ConstraintViolationBuilder.LeafNodeBuilderCustomizableContext {
     private final ConstraintValidatorContextImpl context;
     private final PathImpl path;
     private final String template;
-    private final NodeImpl node;
 
     public LeafNodeBuilderCustomizableContextImpl(final ConstraintValidatorContextImpl parent, String messageTemplate,
         PathImpl propertyPath) {
         context = parent;
         template = messageTemplate;
         path = propertyPath;
-        node = new NodeImpl((String) null);
-        node.setKind(ElementKind.BEAN);
     }
 
     @Override

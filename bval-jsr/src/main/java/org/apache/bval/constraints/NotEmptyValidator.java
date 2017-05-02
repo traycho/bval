@@ -25,7 +25,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
- * Description:  Check the non emptyness of an
+ * Description:  Check the non emptiness of an
  * any object that has a public isEmpty():boolean or a valid toString() method
  */
 public class NotEmptyValidator implements ConstraintValidator<NotEmpty, Object> {
@@ -45,13 +45,9 @@ public class NotEmptyValidator implements ConstraintValidator<NotEmpty, Object> 
         try {
             final Method isEmptyMethod = value.getClass().getMethod("isEmpty");
             if (isEmptyMethod != null) {
-                return !((Boolean) isEmptyMethod.invoke(value)).booleanValue();
+                return !Boolean.TRUE.equals(isEmptyMethod.invoke(value));
             }
-        } catch (IllegalAccessException iae) {
-            // do nothing
-        } catch (NoSuchMethodException nsme) {
-            // do nothing
-        } catch (InvocationTargetException ite) {
+        } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException iae) {
             // do nothing
         }
         return !value.toString().isEmpty();

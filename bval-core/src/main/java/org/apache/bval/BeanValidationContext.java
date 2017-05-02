@@ -35,8 +35,11 @@ import java.util.Map;
  * <b>This class is NOT thread-safe: a new instance will be created for each
  * validation
  * processing per thread.<br/></b>
+ * @param <L> {@link ValidationListener} type
+ * @param <I> bean instance key
+ * @param <S> structure used to track bean instances
  */
-public class BeanValidationContext<T extends ValidationListener> implements ValidationContext<T> {
+public class BeanValidationContext<L extends ValidationListener, I, S> implements ValidationContext<L> {
     /** represent an unknown propertyValue. */
     private static final Object UNKNOWN = new Object() {
         @Override
@@ -61,8 +64,7 @@ public class BeanValidationContext<T extends ValidationListener> implements Vali
     private AccessStrategy access;
 
     /** set of objects already validated to avoid endless loops. */
-    @SuppressWarnings({ "rawtypes" })
-    protected Map validatedObjects;
+    protected Map<I, S> validatedObjects;
 
     /**
      * true when value is fixed, so that it will NOT be dynamically
@@ -73,15 +75,14 @@ public class BeanValidationContext<T extends ValidationListener> implements Vali
     private boolean fixed;
 
     /** listener notified of validation constraint violations. */
-    private T listener;
+    private L listener;
 
     /**
      * Create a new BeanValidationContext instance.
      * @param listener
      */
-    @SuppressWarnings({ "rawtypes" })
-    public BeanValidationContext(T listener) {
-        this(listener, new IdentityHashMap());
+    public BeanValidationContext(L listener) {
+        this(listener, new IdentityHashMap<>());
     }
 
     /**
@@ -89,8 +90,7 @@ public class BeanValidationContext<T extends ValidationListener> implements Vali
      * @param listener
      * @param validatedMap
      */
-    @SuppressWarnings({ "rawtypes" })
-    protected BeanValidationContext(T listener, Map validatedMap) {
+    protected BeanValidationContext(L listener, Map<I, S> validatedMap) {
         this.listener = listener;
         this.validatedObjects = validatedMap;
     }
@@ -99,7 +99,7 @@ public class BeanValidationContext<T extends ValidationListener> implements Vali
      * {@inheritDoc}
      */
     @Override
-    public T getListener() {
+    public L getListener() {
         return listener;
     }
 
@@ -107,7 +107,7 @@ public class BeanValidationContext<T extends ValidationListener> implements Vali
      * Set the listener.
      * @param listener T
      */
-    public void setListener(T listener) {
+    public void setListener(L listener) {
         this.listener = listener;
     }
 
@@ -115,10 +115,10 @@ public class BeanValidationContext<T extends ValidationListener> implements Vali
      * {@inheritDoc}
      * Here, state equates to a given bean reference.
      */
-    @Override
     @SuppressWarnings("unchecked")
+    @Override
     public boolean collectValidated() {
-        return validatedObjects.put(getBean(), Boolean.TRUE) == null;
+        return validatedObjects.put((I) getBean(), (S) Boolean.TRUE) == null;
     }
 
     /**
@@ -232,7 +232,7 @@ public class BeanValidationContext<T extends ValidationListener> implements Vali
      * @return something that is capable to deliver features
      */
     public FeaturesCapable getMeta() {
-        return (metaProperty == null) ? metaBean : metaProperty;
+        return metaProperty == null ? metaBean : metaProperty;
     }
 
     /**
@@ -303,8 +303,8 @@ public class BeanValidationContext<T extends ValidationListener> implements Vali
      */
     @Override
     public String toString() {
-        return "BeanValidationContext{ bean=" + bean + ", metaProperty=" + metaProperty + ", propertyValue="
-            + propertyValue + '}';
+        return String.format("BeanValidationContext{bean=%s, metaProperty=%s, propertyValue=%s}",
+            BeanValidationContext.class.getSimpleName(), bean, metaProperty, propertyValue);
     }
 
     /**

@@ -70,6 +70,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Description: Implements {@link BeanDescriptor}.<br/>
@@ -77,7 +79,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 @Privilizing(@CallTo(Reflection.class))
 public class BeanDescriptorImpl extends ElementDescriptorImpl implements BeanDescriptor {
     private static final CopyOnWriteArraySet<ConstraintValidation<?>> NO_CONSTRAINTS =
-        new CopyOnWriteArraySet<ConstraintValidation<?>>();
+        new CopyOnWriteArraySet<>();
     private static final Validation[] EMPTY_VALIDATION = new Validation[0];
 
     /**
@@ -95,7 +97,7 @@ public class BeanDescriptorImpl extends ElementDescriptorImpl implements BeanDes
 
         Set<PropertyDescriptor> procedureDescriptors = metaBean.getFeature(Bean.PROPERTIES);
         if (procedureDescriptors == null) {
-            procedureDescriptors = new HashSet<PropertyDescriptor>();
+            procedureDescriptors = new HashSet<>();
             for (final MetaProperty prop : metaBean.getProperties()) {
                 if (prop.getValidations().length > 0
                     || (prop.getMetaBean() != null || prop.getFeature(Features.Property.REF_CASCADE) != null)) {
@@ -122,7 +124,7 @@ public class BeanDescriptorImpl extends ElementDescriptorImpl implements BeanDes
         boolean fieldFound = false;
         boolean methodFound = false;
         Class<?> current = prop.getParentMetaBean().getBeanClass();
-        while (current != null && current != Object.class && (!methodFound || !fieldFound)) {
+        while (current != null && !current.equals(Object.class) && (!methodFound || !fieldFound)) {
             if (!fieldFound) {
                 final Field field = Reflection.getDeclaredField(current, prop.getName());
                 if (field != null) {
@@ -278,26 +280,20 @@ public class BeanDescriptorImpl extends ElementDescriptorImpl implements BeanDes
 
     private static Collection<MethodDescriptor> filter(final Set<MethodDescriptor> containedMethods,
         final MethodType type) {
-        final Collection<MethodDescriptor> list = new ArrayList<MethodDescriptor>();
-        for (final MethodDescriptor d : containedMethods) {
-            final boolean getter =
-                d.getParameterDescriptors().isEmpty() && (d.getName().startsWith("get") || (d.getName().startsWith("is")
-                    && boolean.class.equals(d.getReturnValueDescriptor().getElementClass())));
+        Predicate<MethodDescriptor> filter = d -> d.getParameterDescriptors().isEmpty() && (d.getName()
+            .startsWith("get")
+            || (d.getName().startsWith("is") && boolean.class.equals(d.getReturnValueDescriptor().getElementClass())));
 
-            switch (type) {
+        switch (type) {
             case GETTER:
-                if (getter) {
-                    list.add(d);
-                }
                 break;
-
             case NON_GETTER:
-                if (!getter) {
-                    list.add(d);
-                }
-            }
+                filter = filter.negate();
+                break;
+            default:
+                return Collections.emptySet();
         }
-        return list;
+        return containedMethods.stream().filter(filter).collect(Collectors.toList());
     }
 
     @Override
@@ -319,26 +315,20 @@ public class BeanDescriptorImpl extends ElementDescriptorImpl implements BeanDes
      */
     @Override
     public String toString() {
-        return "BeanDescriptorImpl{" + "returnType=" + elementClass + '}';
+        return String.format("%s{returnType=%s}", BeanDescriptorImpl.class.getSimpleName(), elementClass);
     }
 
     private static <A extends ExecutableDescriptor> Set<A> toConstrained(final Collection<A> src) {
-        final Set<A> dest = new HashSet<A>();
-        for (final A d : src) {
-            if (d.hasConstrainedParameters() || d.hasConstrainedReturnValue()) {
-                dest.add(d);
-            }
-        }
-        return Collections.unmodifiableSet(dest);
+        return Collections.unmodifiableSet(src.stream()
+            .filter(d -> d.hasConstrainedParameters() || d.hasConstrainedReturnValue()).collect(Collectors.toSet()));
     }
 
     private static class ExecutableMeta {
         private final ApacheFactoryContext factoryContext;
         private final AnnotationProcessor annotationProcessor;
         private final MetaBean metaBean;
-        private final Map<String, MethodDescriptor> methodConstraints = new HashMap<String, MethodDescriptor>();
-        private final Map<String, ConstructorDescriptor> contructorConstraints =
-            new HashMap<String, ConstructorDescriptor>();
+        private final Map<String, MethodDescriptor> methodConstraints = new HashMap<>();
+        private final Map<String, ConstructorDescriptor> contructorConstraints = new HashMap<>();
         private Boolean isBeanConstrained = null;
 
         private ExecutableMeta(final ApacheFactoryContext factoryContext, final MetaBean metaBean1,
@@ -528,8 +518,7 @@ public class BeanDescriptorImpl extends ElementDescriptorImpl implements BeanDes
         private void buildMethodConstraints() throws InvocationTargetException, IllegalAccessException {
 
             final Class<?> current = metaBean.getBeanClass();
-            final List<Class<?>> classHierarchy =
-                ClassHelper.fillFullClassHierarchyAsList(new ArrayList<Class<?>>(), current);
+            final List<Class<?>> classHierarchy = ClassHelper.fillFullClassHierarchyAsList(new ArrayList<>(), current);
             classHierarchy.remove(current);
 
             for (final Method method : Reflection.getDeclaredMethods(current)) {
@@ -550,7 +539,7 @@ public class BeanDescriptorImpl extends ElementDescriptorImpl implements BeanDes
                     continue;
                 }
 
-                final Collection<Method> parents = new ArrayList<Method>();
+                final Collection<Method> parents = new ArrayList<>();
                 for (final Class<?> clazz : classHierarchy) {
                     final Method overridden =
                         Reflection.getDeclaredMethod(clazz, method.getName(), method.getParameterTypes());
@@ -607,7 +596,7 @@ public class BeanDescriptorImpl extends ElementDescriptorImpl implements BeanDes
                     }
 
                     final Class<?>[] interfaces = method.getDeclaringClass().getInterfaces();
-                    final Collection<Method> itfWithThisMethod = new ArrayList<Method>();
+                    final Collection<Method> itfWithThisMethod = new ArrayList<>();
                     for (final Class<?> i : interfaces) {
                         final Method m = Reflection.getDeclaredMethod(i, method.getName(), method.getParameterTypes());
                         if (m != null) {

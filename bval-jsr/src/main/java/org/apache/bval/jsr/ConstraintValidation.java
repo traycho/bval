@@ -18,27 +18,6 @@
  */
 package org.apache.bval.jsr;
 
-import org.apache.bval.jsr.util.NodeImpl;
-import org.apache.bval.jsr.util.PathImpl;
-import org.apache.bval.model.Validation;
-import org.apache.bval.model.ValidationContext;
-import org.apache.bval.model.ValidationListener;
-import org.apache.bval.util.AccessStrategy;
-import org.apache.bval.util.ObjectUtils;
-import org.apache.bval.util.StringUtils;
-import org.apache.bval.util.reflection.Reflection;
-import org.apache.bval.util.reflection.TypeUtils;
-
-import javax.validation.ConstraintDefinitionException;
-import javax.validation.ConstraintTarget;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorFactory;
-import javax.validation.Payload;
-import javax.validation.UnexpectedTypeException;
-import javax.validation.ValidationException;
-import javax.validation.constraintvalidation.SupportedValidationTarget;
-import javax.validation.constraintvalidation.ValidationTarget;
-import javax.validation.metadata.ConstraintDescriptor;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
@@ -54,6 +33,28 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.validation.ConstraintDefinitionException;
+import javax.validation.ConstraintTarget;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorFactory;
+import javax.validation.Payload;
+import javax.validation.UnexpectedTypeException;
+import javax.validation.ValidationException;
+import javax.validation.constraintvalidation.SupportedValidationTarget;
+import javax.validation.constraintvalidation.ValidationTarget;
+import javax.validation.metadata.ConstraintDescriptor;
+
+import org.apache.bval.jsr.util.NodeImpl;
+import org.apache.bval.jsr.util.PathImpl;
+import org.apache.bval.model.Validation;
+import org.apache.bval.model.ValidationContext;
+import org.apache.bval.model.ValidationListener;
+import org.apache.bval.util.AccessStrategy;
+import org.apache.bval.util.ObjectUtils;
+import org.apache.bval.util.reflection.Reflection;
+import org.apache.bval.util.reflection.TypeUtils;
 
 /**
  * Description: Adapter between Constraint (JSR303) and Validation (Core)<br/>
@@ -98,12 +99,12 @@ public class ConstraintValidation<T extends Annotation> implements Validation, C
      * @return {@link ConstraintDescriptor}
      */
     public ConstraintDescriptor<T> asSerializableDescriptor() {
-        return new ConstraintDescriptorImpl<T>(this);
+        return new ConstraintDescriptorImpl<>(this);
     }
 
     void setGroups(final Set<Class<?>> groups) {
         this.groups = groups;
-        ConstraintAnnotationAttributes.GROUPS.put(attributes, groups.toArray(new Class<?>[groups.size()]));
+        ConstraintAnnotationAttributes.GROUPS.put(attributes, groups.toArray(new Class[groups.size()]));
     }
 
     void setGroups(final Class<?>[] groups) {
@@ -132,7 +133,7 @@ public class ConstraintValidation<T extends Annotation> implements Validation, C
      */
     public void addComposed(ConstraintValidation<?> aConstraintValidation) {
         if (composedConstraints == null) {
-            composedConstraints = new HashSet<ConstraintValidation<?>>();
+            composedConstraints = new HashSet<>();
         }
         composedConstraints.add(aConstraintValidation);
     }
@@ -251,12 +252,12 @@ public class ConstraintValidation<T extends Annotation> implements Validation, C
                 getValidatorsTypes(constraintClasses);
             reduceTarget(validatorTypes, access);
 
-            final List<Type> assignableTypes = new ArrayList<Type>(constraintClasses.length);
+            final List<Type> assignableTypes = new ArrayList<>(constraintClasses.length);
             fillAssignableTypes(type, validatorTypes.keySet(), assignableTypes);
             reduceAssignableTypes(assignableTypes);
             checkOneType(assignableTypes, type, owner, annotation, access);
 
-            if ((type.equals(Object.class) || type.equals(Object[].class)) && validatorTypes.containsKey(Object.class)
+            if ((Object.class.equals(type) || Object[].class.equals(type)) && validatorTypes.containsKey(Object.class)
                 && validatorTypes.containsKey(Object[].class)) {
                 throw new ConstraintDefinitionException(
                     "Only a validator for Object or Object[] should be provided for cross-parameter validators");
@@ -331,7 +332,7 @@ public class ConstraintValidation<T extends Annotation> implements Validation, C
             throw new UnexpectedTypeException(
                 String.format("Ambiguous validators for type %s. See: @%s at %s. Validators are: %s",
                     stringForType(targetType), anno.annotationType().getSimpleName(), stringForLocation(owner, access),
-                    StringUtils.join(types, ", ")));
+                    types.stream().map(Object::toString).collect(Collectors.joining(", "))));
         }
     }
 
@@ -400,7 +401,7 @@ public class ConstraintValidation<T extends Annotation> implements Validation, C
                 }
             }
             if (!validatorsTypes.containsKey(validatedType)) {
-                validatorsTypes.put(validatedType, new ArrayList<Class<? extends ConstraintValidator<A, ?>>>());
+                validatorsTypes.put(validatedType, new ArrayList<>());
             }
             validatorsTypes.get(validatedType).add(validatorType);
         }
@@ -472,7 +473,7 @@ public class ConstraintValidation<T extends Annotation> implements Validation, C
      */
     @Override
     public String toString() {
-        return "ConstraintValidation{" + validator + '}';
+        return String.format("%s{%s}",ConstraintValidation.class.getSimpleName(), validator);
     }
 
     /**
@@ -524,9 +525,8 @@ public class ConstraintValidation<T extends Annotation> implements Validation, C
      * {@inheritDoc}
      */
     @Override
-    @SuppressWarnings("unchecked")
     public Set<ConstraintDescriptor<?>> getComposingConstraints() {
-        return composedConstraints == null ? Collections.EMPTY_SET : composedConstraints;
+        return composedConstraints == null ? Collections.emptySet() : Collections.unmodifiableSet(composedConstraints);
     }
 
     /**
@@ -537,7 +537,7 @@ public class ConstraintValidation<T extends Annotation> implements Validation, C
      * @return {@link Set} of {@link ConstraintValidation}
      */
     Set<ConstraintValidation<?>> getComposingValidations() {
-        return composedConstraints == null ? Collections.<ConstraintValidation<?>> emptySet() : composedConstraints;
+        return composedConstraints == null ? Collections.emptySet() : composedConstraints;
     }
 
     /**
@@ -566,8 +566,7 @@ public class ConstraintValidation<T extends Annotation> implements Validation, C
      */
     @Override
     public List<Class<? extends ConstraintValidator<T, ?>>> getConstraintValidatorClasses() {
-        return validatorClasses == null ? Collections.<Class<? extends ConstraintValidator<T, ?>>> emptyList()
-            : Arrays.asList(validatorClasses);
+        return validatorClasses == null ? Collections.emptyList() : Arrays.asList(validatorClasses);
     }
 
     public void setValidationAppliesTo(final ConstraintTarget validationAppliesTo) {

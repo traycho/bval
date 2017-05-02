@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -209,15 +210,7 @@ public class ConstraintDescriptorImpl<T extends Annotation> implements Constrain
      * generated hashCode on all fields except hashCode
      */
     private int computeHashCode() {
-        int result = annotation != null ? annotation.hashCode() : 0;
-        result = 31 * result + (groups != null ? groups.hashCode() : 0);
-        result = 31 * result + (payload != null ? payload.hashCode() : 0);
-        result = 31 * result + (constraintValidatorClasses != null ? constraintValidatorClasses.hashCode() : 0);
-        result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
-        result = 31 * result + (composingConstraints != null ? composingConstraints.hashCode() : 0);
-        result = 31 * result + (reportAsSingleViolation ? 1 : 0);
-        result = 31 * result + (validationAppliesTo != null ? validationAppliesTo.hashCode() : 0);
-        result = 31 * result + (template != null ? template.hashCode() : 0);
-        return result;
+        return Objects.hash(annotation, groups, payload, constraintValidatorClasses, attributes, composingConstraints,
+            reportAsSingleViolation, validationAppliesTo, template);
     }
 }

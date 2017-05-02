@@ -108,7 +108,20 @@ public class ValidationParser {
             parser.xmlConfig = parseXmlConfig(file);
         }
 
-        if (parser.xmlConfig != null) {
+        if (parser.xmlConfig == null) { // default config
+            final CopyOnWriteArraySet<ExecutableType> executableTypes = new CopyOnWriteArraySet<>();
+            executableTypes.add(ExecutableType.CONSTRUCTORS);
+            executableTypes.add(ExecutableType.NON_GETTER_METHODS);
+
+            parser.bootstrap = new BootstrapConfigurationImpl(
+                    null, null, null, null, null,
+                    new CopyOnWriteArraySet<>(),
+                    true,
+                    executableTypes,
+                    new HashMap<>());
+
+            targetConfig.setExecutableValidation(executableTypes);
+        } else {
             if (parser.xmlConfig.getExecutableValidation() == null) {
                 final ExecutableValidationType value = new ExecutableValidationType();
                 value.setEnabled(true);
@@ -129,29 +142,16 @@ public class ValidationParser {
                     parser.xmlConfig.getMessageInterpolator(),
                     parser.xmlConfig.getTraversableResolver(),
                     parser.xmlConfig.getParameterNameProvider(),
-                    new CopyOnWriteArraySet<String>(parser.xmlConfig.getConstraintMapping()),
+                    new CopyOnWriteArraySet<>(parser.xmlConfig.getConstraintMapping()),
                     parser.xmlConfig.getExecutableValidation().getEnabled(),
-                    new CopyOnWriteArraySet<ExecutableType>(targetConfig.getExecutableValidation()),
+                    new CopyOnWriteArraySet<>(targetConfig.getExecutableValidation()),
                     toMap(parser.xmlConfig.getProperty()));
-        } else { // default config
-            final CopyOnWriteArraySet<ExecutableType> executableTypes = new CopyOnWriteArraySet<ExecutableType>();
-            executableTypes.add(ExecutableType.CONSTRUCTORS);
-            executableTypes.add(ExecutableType.NON_GETTER_METHODS);
-
-            parser.bootstrap = new BootstrapConfigurationImpl(
-                    null, null, null, null, null,
-                    new CopyOnWriteArraySet<String>(),
-                    true,
-                    executableTypes,
-                    new HashMap<String, String>());
-
-            targetConfig.setExecutableValidation(executableTypes);
         }
         return parser;
     }
 
     private static Map<String, String> toMap(final List<PropertyType> property) {
-        final Map<String, String> map = new HashMap<String, String>();
+        final Map<String, String> map = new HashMap<>();
         if (property != null) {
             for (final PropertyType p : property) {
                 map.put(p.getName(), p.getValue());
@@ -162,9 +162,7 @@ public class ValidationParser {
 
     @Privileged
     private static ValidationConfigType parseXmlConfig(final String validationXmlFile) {
-        InputStream inputStream = null;
-        try {
-            inputStream = getInputStream(getValidationXmlFile(validationXmlFile));
+        try (InputStream inputStream = getInputStream(getValidationXmlFile(validationXmlFile))) {
             if (inputStream == null) {
             	log.log(Level.FINEST, String.format("No %s found. Using annotation based configuration only.", validationXmlFile));
                 return null;
@@ -180,12 +178,8 @@ public class ValidationParser {
             JAXBElement<ValidationConfigType> root =
                     unmarshaller.unmarshal(stream, ValidationConfigType.class);
             return root.getValue();
-        } catch (JAXBException e) {
+        } catch (JAXBException | IOException e) {
             throw new ValidationException("Unable to parse " + validationXmlFile, e);
-        } catch (IOException e) {
-            throw new ValidationException("Unable to parse " + validationXmlFile, e);
-        } finally {
-            IOs.closeQuietly(inputStream);
         }
     }
 
@@ -247,7 +241,7 @@ public class ValidationParser {
     }
 
     private static void applyExecutableValidation(final ValidationConfigType xmlConfig, final ConfigurationImpl targetConfig) {
-        final CopyOnWriteArrayList<ExecutableType> executableTypes = new CopyOnWriteArrayList<ExecutableType>();
+        final CopyOnWriteArrayList<ExecutableType> executableTypes = new CopyOnWriteArrayList<>();
         if (xmlConfig.getExecutableValidation() != null && xmlConfig.getExecutableValidation().getEnabled()
                 && xmlConfig.getExecutableValidation().getDefaultValidatedExecutableTypes() != null) {
             executableTypes.addAll(xmlConfig.getExecutableValidation().getDefaultValidatedExecutableTypes().getExecutableType());
@@ -267,16 +261,15 @@ public class ValidationParser {
 
     private void applyParameterNameProvider(final ValidationConfigType xmlConfig, final ConfigurationImpl targetConfig) {
         final String parameterNameProvider = xmlConfig.getParameterNameProvider();
-        if (targetConfig.getParameterNameProvider() == targetConfig.getDefaultParameterNameProvider()) { // ref ==
-            if (parameterNameProvider != null) {
-                final Class<?> loaded = loadClass(parameterNameProvider);
-                if (loaded == null) {
-                    log.log(Level.SEVERE, "Can't load " + parameterNameProvider);
-                } else {
-                    final Class<? extends ParameterNameProvider> clazz = loaded.asSubclass(ParameterNameProvider.class);
-                    targetConfig.parameterNameProviderClass(clazz);
-                    log.log(Level.INFO, String.format("Using %s as validation provider.", parameterNameProvider));
-                }
+        if (targetConfig.getParameterNameProvider() == targetConfig.getDefaultParameterNameProvider()
+            && parameterNameProvider != null) {
+            final Class<?> loaded = loadClass(parameterNameProvider);
+            if (loaded == null) {
+                log.log(Level.SEVERE, "Can't load " + parameterNameProvider);
+            } else {
+                final Class<? extends ParameterNameProvider> clazz = loaded.asSubclass(ParameterNameProvider.class);
+                targetConfig.parameterNameProviderClass(clazz);
+                log.log(Level.INFO, String.format("Using %s as validation provider.", parameterNameProvider));
             }
         }
     }
@@ -296,13 +289,11 @@ public class ValidationParser {
     private void applyMessageInterpolator(ValidationConfigType xmlConfig,
                                           ConfigurationImpl target) {
         String messageInterpolatorClass = xmlConfig.getMessageInterpolator();
-        if (target.getMessageInterpolator() == target.getDefaultMessageInterpolator()) { // ref ==
-            if (messageInterpolatorClass != null) {
-                Class<MessageInterpolator> clazz = (Class<MessageInterpolator>)
-                        loadClass(messageInterpolatorClass);
-                target.messageInterpolatorClass(clazz);
-                log.log(Level.INFO, String.format("Using %s as message interpolator.", messageInterpolatorClass));
-            }
+        if (target.getMessageInterpolator() == target.getDefaultMessageInterpolator()
+            && messageInterpolatorClass != null) {
+            Class<MessageInterpolator> clazz = (Class<MessageInterpolator>) loadClass(messageInterpolatorClass);
+            target.messageInterpolatorClass(clazz);
+            log.log(Level.INFO, String.format("Using %s as message interpolator.", messageInterpolatorClass));
         }
     }
 
@@ -311,8 +302,7 @@ public class ValidationParser {
                                           ConfigurationImpl target) {
         String traversableResolverClass = xmlConfig.getTraversableResolver();
         if (target.getTraversableResolver() == target.getDefaultTraversableResolver() && traversableResolverClass != null) {
-		    Class<TraversableResolver> clazz = (Class<TraversableResolver>)
-		            loadClass(traversableResolverClass);
+            Class<TraversableResolver> clazz = (Class<TraversableResolver>) loadClass(traversableResolverClass);
 		    target.traversableResolverClass(clazz);
 		    log.log(Level.INFO, String.format("Using %s as traversable resolver.", traversableResolverClass));
 		}
@@ -323,8 +313,8 @@ public class ValidationParser {
                                         ConfigurationImpl target) {
         String constraintFactoryClass = xmlConfig.getConstraintValidatorFactory();
         if (target.getConstraintValidatorFactory() == target.getDefaultConstraintValidatorFactory() && constraintFactoryClass != null) {
-		    Class<ConstraintValidatorFactory> clazz = (Class<ConstraintValidatorFactory>)
-		            loadClass(constraintFactoryClass);
+            Class<ConstraintValidatorFactory> clazz =
+                (Class<ConstraintValidatorFactory>) loadClass(constraintFactoryClass);
 		    target.constraintValidatorFactoryClass(clazz);
 		    log.log(Level.INFO, String.format("Using %s as constraint factory.", constraintFactoryClass));
 		}
@@ -334,7 +324,7 @@ public class ValidationParser {
                                      ConfigurationImpl target) {
         for (String rawMappingFileName : xmlConfig.getConstraintMapping()) {
             String mappingFileName = rawMappingFileName;
-            if (mappingFileName.startsWith("/")) {
+            if (mappingFileName.charAt(0) == '/') {
                 // Classloader needs a path without a starting /
                 mappingFileName = mappingFileName.substring(1);
             }

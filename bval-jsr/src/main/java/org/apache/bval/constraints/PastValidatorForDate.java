@@ -43,6 +43,7 @@ public class PastValidatorForDate implements ConstraintValidator<Past, Date> {
      * @return current date/time
      */
     protected Date now() {
+        // use Clock
         return new Date();
     }
 }

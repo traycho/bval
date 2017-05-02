@@ -31,12 +31,11 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class InvocableElementDescriptor extends ElementDescriptorImpl implements ProcedureDescriptor {
-    private static final CopyOnWriteArraySet<ConstraintValidation<?>> NO_CONSTRAINTS =
-        new CopyOnWriteArraySet<ConstraintValidation<?>>();
+    private static final CopyOnWriteArraySet<ConstraintValidation<?>> NO_CONSTRAINTS = new CopyOnWriteArraySet<>();
 
     private ReturnValueDescriptor returnValueDescriptor;
     private CrossParameterDescriptor crossParameterDescriptor;
-    private final List<ParameterDescriptor> parameterDescriptors = new ArrayList<ParameterDescriptor>();
+    private final List<ParameterDescriptor> parameterDescriptors = new ArrayList<>();
 
     protected InvocableElementDescriptor(final MetaBean metaBean, final Class<?> elementClass,
         final Validation[] validations) {
@@ -99,6 +98,7 @@ public class InvocableElementDescriptor extends ElementDescriptorImpl implements
         return new ConstraintFinderImpl(metaBean, NO_CONSTRAINTS);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Set<ConstraintDescriptor<?>> getConstraintDescriptors() {
         return Set.class.cast(NO_CONSTRAINTS);

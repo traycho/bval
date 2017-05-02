@@ -173,7 +173,7 @@ public class BeanValidator<T extends ValidationListener> {
      * @return ValidationContext parameterized with our listener type
      */
     protected ValidationContext<T> createContext() {
-        return new BeanValidationContext<T>(createResults());
+        return new BeanValidationContext<>(createResults());
     }
 
     /**

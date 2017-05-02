@@ -41,7 +41,7 @@ public class ValidationHelper {
      * . Its {@link #validate()} method will be called accordingly for every
      * dispatch.
      */
-    public static interface ValidateCallback {
+    public interface ValidateCallback {
         void validate();
     }
 

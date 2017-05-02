@@ -20,6 +20,8 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * Description: abstract superclass of meta objects that support a map of
@@ -69,13 +71,10 @@ public abstract class FeaturesCapable implements Serializable {
      * @param defaultValue
      * @return T
      */
-    @SuppressWarnings("unchecked")
     public <T> T getFeature(String key, T defaultValue) {
+        @SuppressWarnings("unchecked")
         final T value = (T) features.get(key);
-        if (value == null) {
-            return defaultValue;
-        }
-        return value;
+        return value == null ? defaultValue : value;
     }
 
     /**
@@ -129,7 +128,7 @@ public abstract class FeaturesCapable implements Serializable {
      * @return Validation array
      */
     public Validation[] getValidations() {
-        return validations != null ? validations.clone() : null;
+        return validations == null ? null : validations.clone();
     }
 
     /**
@@ -138,7 +137,7 @@ public abstract class FeaturesCapable implements Serializable {
      * @param validations
      */
     public void setValidations(Validation[] validations) {
-        this.validations = validations != null ? validations.clone() : null;
+        this.validations = validations == null ? null : validations.clone();
     }
 
     /**
@@ -165,15 +164,7 @@ public abstract class FeaturesCapable implements Serializable {
      * @return true if found
      */
     public boolean hasValidation(Validation aValidation) {
-        if (validations == null) {
-            return false;
-        }
-        for (Validation validation : validations) {
-            if (validation.equals(aValidation)) {
-                return true;
-            }
-        }
-        return false;
+        return validations != null && Stream.of(validations).anyMatch(Predicate.isEqual(aValidation));
     }
 
     /**
@@ -181,6 +172,6 @@ public abstract class FeaturesCapable implements Serializable {
      * @return ConcurrentMap
      */
     protected ConcurrentMap<String, Object> createFeaturesMap() {
-        return new ConcurrentHashMap<String, Object>();
+        return new ConcurrentHashMap<>();
     }
 }

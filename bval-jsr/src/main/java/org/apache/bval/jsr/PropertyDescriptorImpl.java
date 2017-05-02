@@ -64,7 +64,7 @@ class PropertyDescriptorImpl extends ElementDescriptorImpl implements PropertyDe
      */
     @Override
     public String toString() {
-        return "PropertyDescriptorImpl{" + "returnType=" + elementClass + ", propertyPath='" + propertyPath + '\''
-            + '}';
+        return String.format("%s{returnType=%s, propertyPath='%s'}", PropertyDescriptorImpl.class.getSimpleName(),
+            elementClass, propertyPath);
     }
 }

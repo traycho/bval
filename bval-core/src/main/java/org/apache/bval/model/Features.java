@@ -26,7 +26,7 @@ package org.apache.bval.model;
  */
 public interface Features {
     /** Features of {@link MetaBean} */
-    public interface Bean {
+    interface Bean {
         /** INFO: String, name of the Property, that is the Primary Key */
         String MAIN_KEY = "mainKey";
         /** INFO: category/domain to which the metaBean belongs to */
@@ -40,7 +40,7 @@ public interface Features {
     }
 
     /** Features of {@link MetaProperty} */
-    public interface Property {
+    interface Property {
         /** INFO: possible Enum values */
         String ENUM = "enum";
         /** INFO: Boolean, TRUE if Property is a Unique Key */

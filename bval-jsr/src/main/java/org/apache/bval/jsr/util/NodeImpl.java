@@ -24,13 +24,13 @@ import javax.validation.Path.Node;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class NodeImpl implements Path.Node, Serializable {
 
     private static final long serialVersionUID = 1L;
     private static final String INDEX_OPEN = "[";
     private static final String INDEX_CLOSE = "]";
-    private List<Class<?>> parameterTypes;
 
     /**
      * Append a Node to the specified StringBuilder.
@@ -85,6 +85,7 @@ public class NodeImpl implements Path.Node, Serializable {
     private int parameterIndex;
     private Object key;
     private ElementKind kind;
+    private List<Class<?>> parameterTypes;
 
     /**
      * Create a new NodeImpl instance.
@@ -99,7 +100,7 @@ public class NodeImpl implements Path.Node, Serializable {
      * @param node
      */
     NodeImpl(Path.Node node) {
-        this.name = node.getName();
+        this(node.getName());
         this.inIterable = node.isInIterable();
         this.index = node.getIndex();
         this.key = node.getKey();
@@ -213,29 +214,14 @@ public class NodeImpl implements Path.Node, Serializable {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (o == null || !getClass().equals(o.getClass())) {
             return false;
         }
 
         NodeImpl node = (NodeImpl) o;
 
-        if (inIterable != node.inIterable) {
-            return false;
-        }
-        if (index != null ? !index.equals(node.index) : node.index != null) {
-            return false;
-        }
-        if (key != null ? !key.equals(node.key) : node.key != null) {
-            return false;
-        }
-        if (name != null ? !name.equals(node.name) : node.name != null) {
-            return false;
-        }
-        if (kind != null ? !kind.equals(node.kind) : node.kind != null) {
-            return false;
-        }
-
-        return true;
+        return inIterable == node.inIterable && Objects.equals(index, node.index) && Objects.equals(key, node.key)
+            && Objects.equals(name, node.name) && kind == node.kind;
     }
 
     /**
@@ -243,12 +229,7 @@ public class NodeImpl implements Path.Node, Serializable {
      */
     @Override
     public int hashCode() {
-        int result = name != null ? name.hashCode() : 0;
-        result = 31 * result + (inIterable ? 1 : 0);
-        result = 31 * result + (index != null ? index.hashCode() : 0);
-        result = 31 * result + (key != null ? key.hashCode() : 0);
-        result = 31 * result + (kind != null ? kind.hashCode() : 0);
-        return result;
+        return Objects.hash(name, Boolean.valueOf(inIterable), index, key, kind);
     }
 
     public int getParameterIndex() {
@@ -263,6 +244,7 @@ public class NodeImpl implements Path.Node, Serializable {
         this.parameterTypes = parameterTypes;
     }
 
+    @SuppressWarnings("serial")
     public static class ParameterNodeImpl extends NodeImpl implements Path.ParameterNode {
         public ParameterNodeImpl(final Node cast) {
             super(cast);
@@ -282,6 +264,7 @@ public class NodeImpl implements Path.Node, Serializable {
         }
     }
 
+    @SuppressWarnings("serial")
     public static class ConstructorNodeImpl extends NodeImpl implements Path.ConstructorNode {
         public ConstructorNodeImpl(final Node cast) {
             super(cast);
@@ -301,6 +284,7 @@ public class NodeImpl implements Path.Node, Serializable {
         }
     }
 
+    @SuppressWarnings("serial")
     public static class CrossParameterNodeImpl extends NodeImpl implements Path.CrossParameterNode {
         public CrossParameterNodeImpl() {
             super("<cross-parameter>");
@@ -316,6 +300,7 @@ public class NodeImpl implements Path.Node, Serializable {
         }
     }
 
+    @SuppressWarnings("serial")
     public static class MethodNodeImpl extends NodeImpl implements Path.MethodNode {
         public MethodNodeImpl(final Node cast) {
             super(cast);
@@ -335,6 +320,7 @@ public class NodeImpl implements Path.Node, Serializable {
         }
     }
 
+    @SuppressWarnings("serial")
     public static class ReturnValueNodeImpl extends NodeImpl implements Path.ReturnValueNode {
         public ReturnValueNodeImpl(final Node cast) {
             super(cast);
@@ -350,6 +336,7 @@ public class NodeImpl implements Path.Node, Serializable {
         }
     }
 
+    @SuppressWarnings("serial")
     public static class PropertyNodeImpl extends NodeImpl implements Path.PropertyNode {
         public PropertyNodeImpl(final String name) {
             super(name);
@@ -365,6 +352,7 @@ public class NodeImpl implements Path.Node, Serializable {
         }
     }
 
+    @SuppressWarnings("serial")
     public static class BeanNodeImpl extends NodeImpl implements Path.BeanNode {
         public BeanNodeImpl() {
             // no-op

@@ -32,11 +32,11 @@ public class MetaBeanCache implements MetaBeanFinder, Serializable {
     /**
      * Cache keyed by id.
      */
-    protected final ConcurrentMap<String, MetaBean> cacheById = new ConcurrentHashMap<String, MetaBean>();
+    protected final ConcurrentMap<String, MetaBean> cacheById = new ConcurrentHashMap<>();
     /**
      * Cache keyed by class.
      */
-    protected final ConcurrentMap<Class<?>, MetaBean> cacheByClass = new ConcurrentHashMap<Class<?>, MetaBean>();
+    protected final ConcurrentMap<Class<?>, MetaBean> cacheByClass = new ConcurrentHashMap<>();
 
     /**
      * Create a new MetaBeanCache instance.
@@ -51,9 +51,7 @@ public class MetaBeanCache implements MetaBeanFinder, Serializable {
      */
     public MetaBeanCache(Map<String, MetaBean> beans) {
         this();
-        for (MetaBean bean : beans.values()) {
-            cache(bean);
-        }
+        beans.values().forEach(this::cache);
     }
 
     /**

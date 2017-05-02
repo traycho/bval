@@ -16,19 +16,21 @@
  */
 package org.apache.bval.jsr;
 
-import org.apache.bval.jsr.util.PathImpl;
-import org.apache.bval.model.ValidationContext;
-import org.apache.bval.model.ValidationListener;
+import java.lang.annotation.ElementType;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ElementKind;
 import javax.validation.MessageInterpolator;
 import javax.validation.Path;
 import javax.validation.metadata.ConstraintDescriptor;
-import java.lang.annotation.ElementType;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+
+import org.apache.bval.jsr.util.PathImpl;
+import org.apache.bval.model.ValidationContext;
+import org.apache.bval.model.ValidationListener;
+import org.apache.bval.util.ObjectUtils;
 
 /**
  * Description: JSR-303 {@link ValidationListener} implementation; provides {@link ConstraintViolation}s.<br/>
@@ -36,7 +38,7 @@ import java.util.Set;
  * @version $Rev: 1503686 $ $Date: 2013-07-16 14:38:56 +0200 (mar., 16 juil. 2013) $
  */
 public final class ConstraintValidationListener<T> implements ValidationListener {
-    private final Set<ConstraintViolation<T>> constraintViolations = new HashSet<ConstraintViolation<T>>();
+    private final Set<ConstraintViolation<T>> constraintViolations = new HashSet<>();
     private final T rootBean;
     private final Class<T> rootBeanType;
     // the validation process is single-threaded and it's unlikely to change in the near future (otherwise use AtomicInteger).
@@ -95,13 +97,15 @@ public final class ConstraintValidationListener<T> implements ValidationListener
             if (propPath == null)
                 propPath = gcontext.getPropertyPath();
         } else {
-            if (context.getMetaProperty() == null)
+            if (context.getMetaProperty() == null) {
                 value = context.getBean();
-            else
+            } else {
                 value = context.getPropertyValue();
+            }
             message = messageTemplate;
-            if (propPath == null)
+            if (propPath == null) {
                 propPath = PathImpl.createPathFromString(context.getPropertyName());
+            }
             descriptor = null;
         }
         ElementType elementType = (context.getAccess() != null) ? context.getAccess().getElementType() : null;
@@ -111,6 +115,7 @@ public final class ConstraintValidationListener<T> implements ValidationListener
         Object returnValue;
         T rootBean;
         if (GroupValidationContext.class.isInstance(context)) { // TODO: clean up it but it would need to rework completely our context - get rid of it would be the best
+            @SuppressWarnings("unchecked")
             final GroupValidationContext<T> ctx = GroupValidationContext.class.cast(context);
             final ElementKind elementKind = ctx.getElementKind();
             final Iterator<Path.Node> it = propPath.iterator();
@@ -118,13 +123,15 @@ public final class ConstraintValidationListener<T> implements ValidationListener
 
             returnValue = ctx.getReturnValue();
 
-            if (ElementKind.CONSTRUCTOR.equals(kind)) {
+            if (ElementKind.CONSTRUCTOR == kind) {
                 rootBean = null;
                 leaf = context.getBean();
                 returnValue = this.rootBean; // switch back return value and rootBean
-            } else if (ElementKind.METHOD.equals(kind)) {
-                if (ElementKind.RETURN_VALUE.equals(elementKind)) { // switch back return value and rootBean
-                    rootBean = (T) returnValue;
+            } else if (ElementKind.METHOD == kind) {
+                if (ElementKind.RETURN_VALUE == elementKind) { // switch back return value and rootBean
+                    @SuppressWarnings("unchecked")
+                    T t = (T) returnValue;
+                    rootBean = t;
                     if (kindOf(propPath, ElementKind.RETURN_VALUE)) {
                         leaf = returnValue;
                         returnValue = this.rootBean;
@@ -145,8 +152,8 @@ public final class ConstraintValidationListener<T> implements ValidationListener
                 leaf = context.getBean();
             }
 
-            if (ElementKind.CONSTRUCTOR.equals(kind)
-                && (ElementKind.CROSS_PARAMETER.equals(elementKind) || ElementKind.PARAMETER.equals(elementKind))
+            if (ElementKind.CONSTRUCTOR == kind
+                && (ElementKind.CROSS_PARAMETER == elementKind || ElementKind.PARAMETER == elementKind)
                 && (it.hasNext() && it.next() != null && it.hasNext() && it.next() != null && !it.hasNext())) { // means inherited validation use real value
                 leaf = null;
             }
@@ -159,24 +166,16 @@ public final class ConstraintValidationListener<T> implements ValidationListener
             rootBean = this.rootBean;
         }
 
-        constraintViolations.add(new ConstraintViolationImpl<T>(messageTemplate, message, rootBean, leaf, propPath,
+        constraintViolations.add(new ConstraintViolationImpl<>(messageTemplate, message, rootBean, leaf, propPath,
             value, descriptor, rootBeanType, elementType, returnValue, parameters));
     }
 
     private static boolean kindOf(final Path propPath, final ElementKind... kinds) {
-        final Iterator<Path.Node> node = propPath.iterator();
-        boolean isParam = false;
-        while (node.hasNext()) {
-            final ElementKind current = node.next().getKind();
-            isParam = false;
-            for (final ElementKind k : kinds) {
-                if (k.equals(current)) {
-                    isParam = true;
-                    break;
-                }
-            }
+        Path.Node last = null;
+        for (Path.Node node : propPath) {
+            last = node;
         }
-        return isParam;
+        return last != null && ObjectUtils.arrayContains(kinds, last.getKind());
     }
 
     /**

@@ -42,7 +42,7 @@ public class MetaBeanBuilder {
      * Create a new MetaBeanBuilder instance.
      */
     public MetaBeanBuilder() {
-        this(new MetaBeanFactory[] { new IntrospectorMetaBeanFactory() });
+        this(new IntrospectorMetaBeanFactory());
     }
 
     /**
@@ -50,7 +50,7 @@ public class MetaBeanBuilder {
      * 
      * @param factories
      */
-    public MetaBeanBuilder(MetaBeanFactory[] factories) {
+    public MetaBeanBuilder(MetaBeanFactory... factories) {
         setFactories(factories);
     }
 
@@ -60,7 +60,7 @@ public class MetaBeanBuilder {
      * @return {@link MetaBeanFactory} array
      */
     public MetaBeanFactory[] getFactories() {
-        return factories != null ? factories.clone() : null;
+        return factories == null ? null : factories.clone();
     }
 
     /**
@@ -69,8 +69,8 @@ public class MetaBeanBuilder {
      * 
      * @param factories
      */
-    public void setFactories(MetaBeanFactory[] factories) {
-        this.factories = factories != null ? factories.clone() : null;
+    public void setFactories(MetaBeanFactory... factories) {
+        this.factories = factories == null ? null : factories.clone();
     }
 
     /**
@@ -92,7 +92,7 @@ public class MetaBeanBuilder {
      * @return Map of String : MetaBean
      */
     public Map<String, MetaBean> buildAll() throws Exception {
-        return new HashMap<String, MetaBean>();
+        return new HashMap<>();
     }
 
     /**

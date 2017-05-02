@@ -16,18 +16,18 @@
  */
 package org.apache.bval.model;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public abstract class MetaInvocable extends MetaAnnotated {
     private static final long serialVersionUID = 1L;
 
-    private Map<Integer, MetaParameter> parameters = new HashMap<Integer, MetaParameter>();
+    private Map<Integer, MetaParameter> parameters = new HashMap<>();
 
     public Collection<MetaParameter> getParameters() {
-        return new ArrayList<MetaParameter>(parameters.values());
+        return Collections.unmodifiableCollection(parameters.values());
     }
 
     public void addParameter(final int idx, final MetaParameter param) {

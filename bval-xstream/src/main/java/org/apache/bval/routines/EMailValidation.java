@@ -27,12 +27,13 @@ import java.util.regex.Pattern;
  */
 public class EMailValidation implements Validation {
 
-    private java.util.regex.Pattern pattern = EMailValidationUtils.DEFAULT_EMAIL_PATTERN;
+    private Pattern pattern = EMailValidationUtils.DEFAULT_EMAIL_PATTERN;
 
     @Override
     public <T extends ValidationListener> void validate(ValidationContext<T> context) {
-        if (context.getPropertyValue() == null)
+        if (context.getPropertyValue() == null) {
             return;
+        }
         if (!EMailValidationUtils.isValid(context.getPropertyValue(), getPattern())) {
             context.getListener().addError(Reasons.EMAIL_ADDRESS, context);
         }

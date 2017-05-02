@@ -28,6 +28,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Description: root element of a xml-beanInfos document<br/>
@@ -89,23 +91,21 @@ public class XMLMetaBeanInfos {
     }
 
     public XMLMetaBean getBean(String id) {
-        if (beans == null)
+        if (beans == null) {
             return null;
-        if (beanLookup == null)
+        }
+        if (beanLookup == null) {
             initBeanLookup();
+        }
         return beanLookup.get(id);
     }
 
     private void initBeanLookup() {
-        final HashMap<String, XMLMetaBean> map = new HashMap<String, XMLMetaBean>(beans.size());
-        for (XMLMetaBean bean : beans) {
-            map.put(bean.getId(), bean);
-        }
-        beanLookup = new ConcurrentHashMap<String, XMLMetaBean>(map);
+        beanLookup = beans.stream().collect(Collectors.toConcurrentMap(XMLMetaBean::getId, Function.identity()));
     }
 
     private void initValidationLookup() throws Exception {
-        final HashMap<String, XMLMetaValidator> map = new HashMap<String, XMLMetaValidator>(validators.size());
+        final Map<String, XMLMetaValidator> map = new HashMap<>(validators.size());
         for (XMLMetaValidator xv : validators) {
             if (xv.getJava() != null) {
                 Validation validation = (Validation) Reflection.toClass(xv.getJava()).newInstance();
@@ -113,26 +113,30 @@ public class XMLMetaBeanInfos {
                 map.put(xv.getId(), xv);
             }
         }
-        validationLookup = new ConcurrentHashMap<String, XMLMetaValidator>(map);
+        validationLookup = new ConcurrentHashMap<>(map);
     }
 
     public void addBean(XMLMetaBean bean) {
-        if (beans == null)
-            beans = new ArrayList<XMLMetaBean>();
+        if (beans == null) {
+            beans = new ArrayList<>();
+        }
         beans.add(bean);
     }
 
     public XMLMetaValidator getValidator(String id) throws Exception {
-        if (validators == null)
+        if (validators == null) {
             return null;
-        if (validationLookup == null)
+        }
+        if (validationLookup == null) {
             initValidationLookup();
+        }
         return validationLookup.get(id);
     }
 
     public void addValidator(XMLMetaValidator validator) {
-        if (validators == null)
-            validators = new ArrayList<XMLMetaValidator>();
+        if (validators == null) {
+            validators = new ArrayList<>();
+        }
         validators.add(validator);
     }
 }

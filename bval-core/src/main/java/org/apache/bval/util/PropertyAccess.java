@@ -33,6 +33,8 @@ import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
@@ -51,7 +53,7 @@ public class PropertyAccess extends AccessStrategy {
     private static final String BEANUTILS_PROPERTY_ACCESS = "org.apache.bval.util.BeanUtilsPropertyAccess";
     private static final Constructor<? extends PropertyAccess> BEANUTILS_PROPERTY_ACCESS_CTOR;
     private static final ConcurrentMap<Class<?>, Map<String, PropertyDescriptor>> PROPERTY_DESCRIPTORS =
-        new ConcurrentHashMap<Class<?>, Map<String, PropertyDescriptor>>();
+        new ConcurrentHashMap<>();
 
     static {
         final ClassLoader cl = Reflection.getClassLoader(PropertyAccess.class);
@@ -206,10 +208,8 @@ public class PropertyAccess extends AccessStrategy {
 
     private static Method getPropertyReadMethod(String propertyName, Class<?> beanClass) {
         final Map<String, PropertyDescriptor> propertyDescriptors = getPropertyDescriptors(beanClass);
-        if (propertyDescriptors.containsKey(propertyName)) {
-            return propertyDescriptors.get(propertyName).getReadMethod();
-        }
-        return null;
+        return Optional.ofNullable(propertyDescriptors.get(propertyName)).map(PropertyDescriptor::getReadMethod)
+            .orElse(null);
     }
 
     private static Field getField(String propertyName, Class<?> beanClass) {
@@ -291,7 +291,7 @@ public class PropertyAccess extends AccessStrategy {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (o == null || !getClass().equals(o.getClass())) {
             return false;
         }
 
@@ -305,10 +305,7 @@ public class PropertyAccess extends AccessStrategy {
      */
     @Override
     public int hashCode() {
-        int result;
-        result = beanClass.hashCode();
-        result = 31 * result + propertyName.hashCode();
-        return result;
+        return Objects.hash(beanClass, propertyName);
     }
 
     private static Map<String, PropertyDescriptor> getPropertyDescriptors(Class<?> type) {
@@ -321,7 +318,7 @@ public class PropertyAccess extends AccessStrategy {
             if (propertyDescriptors == null) {
                 m = Collections.emptyMap();
             } else {
-                m = new HashMap<String, PropertyDescriptor>();
+                m = new HashMap<>();
                 for (PropertyDescriptor pd : propertyDescriptors) {
                     m.put(pd.getName(), pd);
                 }

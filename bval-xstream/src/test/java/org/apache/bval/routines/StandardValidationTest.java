@@ -38,8 +38,8 @@ import org.junit.Test;
  */
 public class StandardValidationTest implements ValidationListener {
     private StandardValidation validation;
-    private BeanValidationContext<StandardValidationTest> context;
-    private List<String> reasons = new ArrayList<String>();
+    private BeanValidationContext<StandardValidationTest, Object, Boolean> context;
+    private List<String> reasons = new ArrayList<>();
     private MetaProperty metaProperty;
     private String stringValue;
     private Date dateValue;
@@ -48,7 +48,7 @@ public class StandardValidationTest implements ValidationListener {
     @Before
     public void setUp() throws Exception {
         validation = new StandardValidation();
-        context = new BeanValidationContext<StandardValidationTest>(this);
+        context = new BeanValidationContext<>(this);
         metaProperty = new MetaProperty();
         context.setBean(this, null);
         context.setMetaProperty(metaProperty);

@@ -105,8 +105,7 @@ final class ConstraintFinderImpl implements ElementDescriptor.ConstraintFinder {
      */
     @Override
     public ElementDescriptor.ConstraintFinder declaredOn(ElementType... elementTypes) {
-        final Set<ConstraintValidation<?>> matchingDescriptors =
-            new HashSet<ConstraintValidation<?>>(constraintDescriptors.size());
+        final Set<ConstraintValidation<?>> matchingDescriptors = new HashSet<>(constraintDescriptors.size());
         for (ElementType each : elementTypes) {
             for (ConstraintValidation<?> descriptor : constraintDescriptors) {
                 if (isInScope(descriptor) && isAtElement(descriptor, each)) {
@@ -162,7 +161,7 @@ final class ConstraintFinderImpl implements ElementDescriptor.ConstraintFinder {
         if (constraintDescriptors.isEmpty()) {
             return Collections.emptySet();
         }
-        return Collections.<ConstraintDescriptor<?>> unmodifiableSet(constraintDescriptors);
+        return Collections.unmodifiableSet(constraintDescriptors);
     }
 
     /**

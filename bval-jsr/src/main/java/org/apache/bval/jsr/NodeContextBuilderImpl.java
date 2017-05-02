@@ -65,7 +65,6 @@ public class NodeContextBuilderImpl
     @Override
     public ConstraintValidatorContext.ConstraintViolationBuilder.LeafNodeBuilderCustomizableContext addBeanNode() {
         final NodeImpl node = new NodeImpl.BeanNodeImpl();
-        node.setKind(ElementKind.BEAN);
         path.addNode(node);
         return new LeafNodeBuilderCustomizableContextImpl(context, template, path);
     }

@@ -41,6 +41,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
     NotEmptyValidatorForString.class, NotEmptyValidator.class })
 @Target({ METHOD, FIELD, ANNOTATION_TYPE, PARAMETER })
 @Retention(RUNTIME)
+@Deprecated
+// TODO compose or delete
 public @interface NotEmpty {
     Class<?>[] groups() default {};
 

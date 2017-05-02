@@ -18,6 +18,24 @@
  */
 package org.apache.bval.jsr;
 
+import java.lang.annotation.Annotation;
+import java.lang.annotation.ElementType;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.validation.ConstraintDeclarationException;
+import javax.validation.GroupDefinitionException;
+import javax.validation.GroupSequence;
+import javax.validation.groups.ConvertGroup;
+import javax.validation.groups.Default;
+
 import org.apache.bval.MetaBeanFactory;
 import org.apache.bval.jsr.groups.Group;
 import org.apache.bval.jsr.util.ClassHelper;
@@ -36,24 +54,6 @@ import org.apache.bval.util.reflection.Reflection;
 import org.apache.commons.weaver.privilizer.Privilizing;
 import org.apache.commons.weaver.privilizer.Privilizing.CallTo;
 
-import javax.validation.ConstraintDeclarationException;
-import javax.validation.GroupDefinitionException;
-import javax.validation.GroupSequence;
-import javax.validation.groups.ConvertGroup;
-import javax.validation.groups.Default;
-
-import java.lang.annotation.Annotation;
-import java.lang.annotation.ElementType;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 /**
  * Description: process the class annotations for JSR303 constraint validations to build the MetaBean with information
  * from annotations and JSR303 constraint mappings (defined in xml)<br/>
@@ -63,6 +63,11 @@ public class JsrMetaBeanFactory implements MetaBeanFactory {
     /** Shared log instance */
     // of dubious utility as it's static :/
     protected static final Logger log = Logger.getLogger(JsrMetaBeanFactory.class.getName());
+
+    private static boolean isAccessor(Method m) {
+        return m.getParameterCount() == 0 && !Void.TYPE.equals(m.getReturnType()) && (m.getName().startsWith("get")
+            || m.getName().startsWith("is") && Boolean.TYPE.equals(m.getReturnType()));
+    }
 
     /** {@link javax.validation.ValidatorFactory} used */
     protected final ApacheValidatorFactory factory;
@@ -93,7 +98,7 @@ public class JsrMetaBeanFactory implements MetaBeanFactory {
 
             // process class, superclasses and interfaces
             final List<Class<?>> classSequence =
-                ClassHelper.fillFullClassHierarchyAsList(new ArrayList<Class<?>>(), beanClass);
+                ClassHelper.fillFullClassHierarchyAsList(new ArrayList<>(), beanClass);
 
             // start with superclasses and go down the hierarchy so that
             // the child classes are processed last to have the chance to
@@ -130,7 +135,7 @@ public class JsrMetaBeanFactory implements MetaBeanFactory {
                 new AppendValidationToMeta(metabean));
         }
 
-        final Collection<String> missingValid = new ArrayList<String>();
+        final Collection<String> missingValid = new ArrayList<>();
 
         final Field[] fields = Reflection.getDeclaredFields(beanClass);
         for (final Field field : fields) {
@@ -147,23 +152,18 @@ public class JsrMetaBeanFactory implements MetaBeanFactory {
                     new AppendValidationToMeta(metaProperty)) && create) {
                     metabean.putProperty(metaProperty.getName(), null);
                 }
-
                 if (field.getAnnotation(ConvertGroup.class) != null) {
                     missingValid.add(field.getName());
                 }
             }
         }
-        final Method[] methods = Reflection.getDeclaredMethods(beanClass);
-        for (final Method method : methods) {
+        for (final Method method : Reflection.getDeclaredMethods(beanClass)) {
             if (method.isSynthetic() || method.isBridge()) {
                 continue;
             }
-            String propName = null;
-            if (method.getParameterTypes().length == 0) {
-                propName = MethodAccess.getPropertyName(method);
-            }
-            if (propName != null) {
-                if (!factory.getAnnotationIgnores().isIgnoreAnnotations(method)) {
+            if (method.getParameterCount() == 0) {
+                String propName = MethodAccess.getPropertyName(method);
+                if (propName != null && !factory.getAnnotationIgnores().isIgnoreAnnotations(method)) {
                     AccessStrategy access = new MethodAccess(propName, method);
                     MetaProperty metaProperty = metabean.getProperty(propName);
                     boolean create = metaProperty == null;
@@ -208,7 +208,7 @@ public class JsrMetaBeanFactory implements MetaBeanFactory {
             if (access == null) { // class level
                 meta = null;
             } else if (access.getElementType() == ElementType.METHOD
-                && !metaConstraint.getMember().getName().startsWith("get")) { // TODO: better getter test
+                && !isAccessor((Method) metaConstraint.getMember())) {
                 final Method method = Method.class.cast(metaConstraint.getMember());
                 meta = metabean.getMethod(method);
                 final MetaMethod metaMethod;
@@ -220,15 +220,15 @@ public class JsrMetaBeanFactory implements MetaBeanFactory {
                     metaMethod = MetaMethod.class.cast(meta);
                 }
                 final Integer index = metaConstraint.getIndex();
-                if (index != null && index >= 0) {
+                if (index == null || index.intValue() < 0) {
+                    metaMethod.addAnnotation(metaConstraint.getAnnotation());
+                } else {
                     MetaParameter param = metaMethod.getParameter(index);
                     if (param == null) {
                         param = new MetaParameter(metaMethod, index);
                         metaMethod.addParameter(index, param);
                     }
                     param.addAnnotation(metaConstraint.getAnnotation());
-                } else {
-                    metaMethod.addAnnotation(metaConstraint.getAnnotation());
                 }
                 continue;
             } else if (access.getElementType() == ElementType.CONSTRUCTOR) {
@@ -243,15 +243,15 @@ public class JsrMetaBeanFactory implements MetaBeanFactory {
                     metaConstructor = MetaConstructor.class.cast(meta);
                 }
                 final Integer index = metaConstraint.getIndex();
-                if (index != null && index >= 0) {
+                if (index == null || index.intValue() < 0) {
+                    metaConstructor.addAnnotation(metaConstraint.getAnnotation());
+                } else {
                     MetaParameter param = metaConstructor.getParameter(index);
                     if (param == null) {
                         param = new MetaParameter(metaConstructor, index);
                         metaConstructor.addParameter(index, param);
                     }
                     param.addAnnotation(metaConstraint.getAnnotation());
-                } else {
-                    metaConstructor.addAnnotation(metaConstraint.getAnnotation());
                 }
                 continue;
             } else { // property level
@@ -292,16 +292,15 @@ public class JsrMetaBeanFactory implements MetaBeanFactory {
         List<Group> groupSeq = metabean.getFeature(key);
         if (groupSeq == null) {
             groupSeq =
-                metabean.initFeature(key, new ArrayList<Group>(annotation == null ? 1 : annotation.value().length));
+                metabean.initFeature(key, new ArrayList<>(annotation == null ? 1 : annotation.value().length));
         }
         Class<?>[] groupClasses = factory.getDefaultSequence(beanClass);
         if (groupClasses == null || groupClasses.length == 0) {
             if (annotation == null) {
                 groupSeq.add(Group.DEFAULT);
                 return;
-            } else {
-                groupClasses = annotation.value();
             }
+            groupClasses = annotation.value();
         }
         boolean containsDefault = false;
         for (final Class<?> groupClass : groupClasses) {

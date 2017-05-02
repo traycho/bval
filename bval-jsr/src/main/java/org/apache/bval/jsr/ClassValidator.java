@@ -261,10 +261,8 @@ public class ClassValidator implements CascadingPropertyValidator, ExecutableVal
                 edesc = metaBean.initFeature(JsrFeatures.Bean.BEAN_DESCRIPTOR, createBeanDescriptor(metaBean));
             }
             return edesc;
-        } catch (final ConstraintDefinitionException definitionEx) {
-            throw definitionEx;
-        } catch (final ConstraintDeclarationException declarationEx) {
-            throw declarationEx;
+        } catch (final ConstraintDefinitionException | ConstraintDeclarationException ex) {
+            throw ex;
         } catch (final RuntimeException ex) {
             throw new ValidationException("error retrieving constraints for " + clazz, ex);
         }
@@ -386,7 +384,7 @@ public class ClassValidator implements CascadingPropertyValidator, ExecutableVal
                 // to the GroupSequence defined in the same class
 
                 // Obtain the full class hierarchy
-                final List<Class<?>> classHierarchy = new ArrayList<Class<?>>();
+                final List<Class<?>> classHierarchy = new ArrayList<>();
                 ClassHelper.fillFullClassHierarchyAsList(classHierarchy, context.getMetaBean().getBeanClass());
                 final Class<?> initialOwner = context.getCurrentOwner();
 
@@ -600,21 +598,9 @@ public class ClassValidator implements CascadingPropertyValidator, ExecutableVal
     private void validatePropertyInGroup(final GroupValidationContext<?> context) {
         final Runnable helper;
         if (context.getMetaProperty() == null) {
-            helper = new Runnable() {
-
-                @Override
-                public void run() {
-                    ValidationHelper.validateBean(context);
-                }
-            };
+            helper = () -> ValidationHelper.validateBean(context);
         } else {
-            helper = new Runnable() {
-
-                @Override
-                public void run() {
-                    ValidationHelper.validateProperty(context);
-                }
-            };
+            helper = () -> ValidationHelper.validateProperty(context);
         }
         final List<Group> defaultGroups = expandDefaultGroup(context);
         if (defaultGroups == null) {
@@ -642,8 +628,8 @@ public class ClassValidator implements CascadingPropertyValidator, ExecutableVal
      */
     protected <T> GroupValidationContext<T> createContext(MetaBean metaBean, T object, Class<T> objectClass,
         Class<?>... groups) {
-        final ConstraintValidationListener<T> listener = new ConstraintValidationListener<T>(object, objectClass);
-        final GroupValidationContextImpl<T> context = new GroupValidationContextImpl<T>(listener,
+        final ConstraintValidationListener<T> listener = new ConstraintValidationListener<>(object, objectClass);
+        final GroupValidationContextImpl<T> context = new GroupValidationContextImpl<>(listener,
             factoryContext.getMessageInterpolator(), factoryContext.getTraversableResolver(),
             factoryContext.getParameterNameProvider(), factoryContext.getConstraintValidatorFactory(), metaBean);
         context.setBean(object, metaBean);
@@ -653,8 +639,8 @@ public class ClassValidator implements CascadingPropertyValidator, ExecutableVal
 
     protected <T> GroupValidationContext<T> createInvocableContext(MetaBean metaBean, T object, Class<T> objectClass,
         Class<?>... groups) {
-        final ConstraintValidationListener<T> listener = new ConstraintValidationListener<T>(object, objectClass);
-        final GroupValidationContextImpl<T> context = new GroupValidationContextImpl<T>(listener,
+        final ConstraintValidationListener<T> listener = new ConstraintValidationListener<>(object, objectClass);
+        final GroupValidationContextImpl<T> context = new GroupValidationContextImpl<>(listener,
             factoryContext.getMessageInterpolator(), factoryContext.getTraversableResolver(),
             factoryContext.getParameterNameProvider(), factoryContext.getConstraintValidatorFactory(), metaBean);
         context.setBean(object, metaBean);
@@ -1204,7 +1190,7 @@ public class ClassValidator implements CascadingPropertyValidator, ExecutableVal
 
                     Validation[] validations = meta.getValidations();
                     if (validations == null || validations.length == 0) {
-                        return Collections.<ConstraintViolation<T>> emptySet();
+                        return Collections.emptySet();
                     }
                 }
                 if (!TypeUtils.isAssignable(value == null ? null : value.getClass(), contextTraversal.getType())) {

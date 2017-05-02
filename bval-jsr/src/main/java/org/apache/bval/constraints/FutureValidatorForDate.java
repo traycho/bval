@@ -43,6 +43,7 @@ public class FutureValidatorForDate implements ConstraintValidator<Future, Date>
      * @return current date/time
      */
     protected Date now() {
+        // TODO use Clock
         return new Date();
     }
 }

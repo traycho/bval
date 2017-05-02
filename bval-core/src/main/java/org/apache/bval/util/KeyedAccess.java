@@ -22,6 +22,7 @@ import java.lang.annotation.ElementType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * {@link AccessStrategy} to get a keyed value from a {@link Map}. Contains
@@ -43,7 +44,7 @@ public class KeyedAccess extends AccessStrategy {
     public static Type getJavaElementType(Type containerType) {
         if (TypeUtils.isAssignable(containerType, Map.class)) {
             Map<TypeVariable<?>, Type> typeArguments = TypeUtils.getTypeArguments(containerType, Map.class);
-            return ObjectUtils.defaultIfNull(TypeUtils.unrollVariables(typeArguments, MAP_TYPEVARS[1]), Object.class);
+            return Optional.ofNullable(TypeUtils.unrollVariables(typeArguments, MAP_TYPEVARS[1])).orElse(Object.class);
         }
         return null;
     }
@@ -83,11 +84,7 @@ public class KeyedAccess extends AccessStrategy {
                     final Object result = map.get(Enum.valueOf((Class<? extends Enum>) rawKeyType, name));
                     return result;
                 }
-                for (Map.Entry<?, ?> e : map.entrySet()) {
-                    if (name.equals(e.getKey())) {
-                        return e.getValue();
-                    }
-                }
+                return map.get(name);
             }
         }
         return null;

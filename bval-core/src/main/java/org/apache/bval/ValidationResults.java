@@ -21,6 +21,7 @@ import org.apache.bval.model.ValidationListener;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -92,8 +93,8 @@ public class ValidationResults implements ValidationListener, Serializable {
      * not on instance creation to save memory garbage.
      */
     protected void initialize() {
-        errorsByReason = new LinkedHashMap<String, List<Error>>();
-        errorsByOwner = new LinkedHashMap<Object, Map<String, List<Error>>>();
+        errorsByReason = new LinkedHashMap<>();
+        errorsByOwner = new LinkedHashMap<>();
     }
 
     /**
@@ -102,16 +103,9 @@ public class ValidationResults implements ValidationListener, Serializable {
      * @see {@link Error#getReason()}
      */
     protected void addToReasonBucket(Error error) {
-        if (error.getReason() == null) {
-            return;
+        if (error.getReason() != null) {
+            errorsByReason.computeIfAbsent(error.getReason(), k -> new ArrayList<>()).add(error);
         }
-
-        List<Error> errors = errorsByReason.get(error.getReason());
-        if (errors == null) {
-            errors = new ArrayList<Error>();
-            errorsByReason.put(error.getReason(), errors);
-        }
-        errors.add(error);
     }
 
     /**
@@ -120,21 +114,10 @@ public class ValidationResults implements ValidationListener, Serializable {
      * @see {@link Error#getOwner()}
      */
     protected void addToOwnerBucket(Error error) {
-        if (error.getOwner() == null) {
-            return;
+        if (error.getOwner() != null) {
+            errorsByOwner.computeIfAbsent(error.getOwner(), k -> new HashMap<>())
+                .computeIfAbsent(error.getPropertyName(), k -> new ArrayList<>()).add(error);
         }
-
-        Map<String, List<Error>> errors = errorsByOwner.get(error.getOwner());
-        if (errors == null) {
-            errors = new HashMap<String, List<Error>>();
-            errorsByOwner.put(error.getOwner(), errors);
-        }
-        List<Error> list = errors.get(error.getPropertyName());
-        if (list == null) {
-            list = new ArrayList<Error>();
-            errors.put(error.getPropertyName(), list);
-        }
-        list.add(error);
     }
 
     /**
@@ -143,10 +126,7 @@ public class ValidationResults implements ValidationListener, Serializable {
      * @return map
      */
     public Map<String, List<Error>> getErrorsByReason() {
-        if (errorsByReason == null) {
-            return Collections.emptyMap();
-        }
-        return errorsByReason;
+        return errorsByReason == null ? Collections.emptyMap() : Collections.unmodifiableMap(errorsByReason);
     }
 
     /**
@@ -156,10 +136,7 @@ public class ValidationResults implements ValidationListener, Serializable {
      * @return map
      */
     public Map<Object, Map<String, List<Error>>> getErrorsByOwner() {
-        if (errorsByOwner == null) {
-            return Collections.emptyMap();
-        }
-        return errorsByOwner;
+        return errorsByOwner == null ? Collections.emptyMap() : Collections.unmodifiableMap(errorsByOwner);
     }
 
     /**
@@ -170,19 +147,8 @@ public class ValidationResults implements ValidationListener, Serializable {
         if (errorsByReason == null || (errorsByReason.isEmpty() && errorsByOwner.isEmpty())) {
             return true;
         }
-        for (List<Error> list : errorsByReason.values()) {
-            if (!list.isEmpty()) {
-                return false;
-            }
-        }
-        for (Map<String, List<Error>> map : errorsByOwner.values()) {
-            for (List<Error> list : map.values()) {
-                if (!list.isEmpty()) {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return errorsByReason.values().stream().allMatch(Collection::isEmpty) && errorsByOwner.values().stream()
+            .map(Map::values).flatMap(Collection::stream).allMatch(Collection::isEmpty);
     }
 
     /**
@@ -215,12 +181,7 @@ public class ValidationResults implements ValidationListener, Serializable {
             return false;
         }
         if (propertyName == null) {
-            for (List<Error> list : errors.values()) {
-                if (!list.isEmpty()) {
-                    return true;
-                }
-            }
-            return false;
+            return !errors.values().stream().allMatch(Collection::isEmpty);
         }
         List<Error> list = errors.get(propertyName);
         return list != null && !list.isEmpty();

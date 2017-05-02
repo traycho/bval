@@ -25,7 +25,7 @@ import java.util.List;
  * cache of validations for further processing.<br/>
  */
 public class AppendValidationToList extends BaseAppendValidation {
-    private final List<ConstraintValidation<?>> validations = new ArrayList<ConstraintValidation<?>>();
+    private final List<ConstraintValidation<?>> validations = new ArrayList<>();
 
     /**
      * {@inheritDoc}

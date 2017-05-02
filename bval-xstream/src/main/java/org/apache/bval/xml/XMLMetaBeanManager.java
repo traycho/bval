@@ -74,8 +74,7 @@ public class XMLMetaBeanManager extends MetaBeanManager implements XMLMetaBeanRe
         Map<String, MetaBean> cached = findAll();
         try {
             Map<String, MetaBean> patched = ((XMLMetaBeanBuilder) builder).enrichCopies(cached, infos);
-            for (Object entry : patched.values()) {
-                MetaBean meta = (MetaBean) entry;
+            for (MetaBean meta : patched.values()) {
                 computeRelationships(meta, patched);
             }
             return patched;
@@ -102,8 +101,7 @@ public class XMLMetaBeanManager extends MetaBeanManager implements XMLMetaBeanRe
                     }
                 }
                 Map<String, MetaBean> map = cache.findAll();
-                for (Object oentry : map.values()) {
-                    MetaBean meta = (MetaBean) oentry;
+                for (MetaBean meta : map.values()) {
                     computeRelationships(meta, map);
                 }
                 complete = true;
@@ -120,7 +118,7 @@ public class XMLMetaBeanManager extends MetaBeanManager implements XMLMetaBeanRe
 
     protected void computeRelationships(MetaBean beanInfo, Map<String, MetaBean> cached) {
         for (MetaProperty prop : beanInfo.getProperties()) {
-            String beanRef = (String) prop.getFeature(REF_BEAN_ID);
+            String beanRef = prop.getFeature(REF_BEAN_ID);
             if (beanRef != null) {
                 prop.setMetaBean(cached.get(beanRef));
             }

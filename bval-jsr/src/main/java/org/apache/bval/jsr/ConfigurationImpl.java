@@ -19,7 +19,6 @@
 package org.apache.bval.jsr;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
@@ -97,8 +96,7 @@ public class ConfigurationImpl implements ApacheValidatorConfiguration, Configur
 
     protected Collection<ExecutableType> executableValidation;
 
-    private Collection<BValExtension.Releasable<?>> releasables =
-        new CopyOnWriteArrayList<BValExtension.Releasable<?>>();
+    private Collection<BValExtension.Releasable<?>> releasables = new CopyOnWriteArrayList<>();
 
     private boolean beforeCdi = false;
 
@@ -109,8 +107,8 @@ public class ConfigurationImpl implements ApacheValidatorConfiguration, Configur
     private boolean prepared = false;
     // END DEFAULTS
 
-    private Set<InputStream> mappingStreams = new HashSet<InputStream>();
-    private Map<String, String> properties = new HashMap<String, String>();
+    private Set<InputStream> mappingStreams = new HashSet<>();
+    private Map<String, String> properties = new HashMap<>();
     private boolean ignoreXmlConfiguration = false;
 
     private volatile ValidationParser parser;
@@ -452,14 +450,11 @@ public class ConfigurationImpl implements ApacheValidatorConfiguration, Configur
     }
 
     public Closeable getClosable() {
-        return new Closeable() {
-            @Override
-            public void close() throws IOException {
-                for (final BValExtension.Releasable<?> releasable : releasables) {
-                    releasable.release();
-                }
-                releasables.clear();
+        return () -> {
+            for (final BValExtension.Releasable<?> releasable : releasables) {
+                releasable.release();
             }
+            releasables.clear();
         };
     }
 
@@ -469,8 +464,7 @@ public class ConfigurationImpl implements ApacheValidatorConfiguration, Configur
             final BValExtension.Releasable<T> releasable = BValExtension.inject(cls);
             releasables.add(releasable);
             return releasable.getInstance();
-        } catch (final Exception e) {
-        } catch (final NoClassDefFoundError error) {
+        } catch (Exception | NoClassDefFoundError e) {
         }
         try {
             return cls.newInstance();

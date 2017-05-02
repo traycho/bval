@@ -35,6 +35,6 @@ public class EmailValidator implements ConstraintValidator<Email, CharSequence> 
 
     @Override
     public void initialize(Email parameters) {
-        // do nothing (as long as Email has no properties)
+        // TODO
     }
 }

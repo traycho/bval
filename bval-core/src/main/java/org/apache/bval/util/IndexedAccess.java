@@ -46,7 +46,7 @@ public class IndexedAccess extends AccessStrategy {
         if (TypeUtils.isAssignable(containerType, Iterable.class)) {
             Map<TypeVariable<?>, Type> typeArguments = TypeUtils.getTypeArguments(containerType, Iterable.class);
             Type type = TypeUtils.unrollVariables(typeArguments, ITERABLE_TYPE);
-            return type != null ? type : Object.class;
+            return type == null ? Object.class : type;
         }
         return null;
     }

@@ -23,6 +23,7 @@ import org.apache.bval.util.AccessStrategy;
 
 import java.lang.annotation.ElementType;
 import java.lang.reflect.Type;
+import java.util.Objects;
 
 /**
  * Implementation of {@link org.apache.bval.util.AccessStrategy} for method parameters.
@@ -73,15 +74,17 @@ public class ParameterAccess extends AccessStrategy {
      */
     @Override
     public String getPropertyName() {
-        return "" + paramIdx;
+        return Integer.toString(paramIdx);
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (o == null || !getClass().equals(o.getClass())) {
             return false;
+        }
 
         final ParameterAccess that = (ParameterAccess) o;
         return paramIdx == that.paramIdx && paramType.equals(that.paramType);
@@ -89,8 +92,6 @@ public class ParameterAccess extends AccessStrategy {
 
     @Override
     public int hashCode() {
-        int result = paramType.hashCode();
-        result = 31 * result + paramIdx;
-        return result;
+        return Objects.hash(paramType, paramIdx);
     }
 }

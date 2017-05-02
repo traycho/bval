@@ -22,6 +22,7 @@ import com.thoughtworks.xstream.annotations.XStreamImplicit;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Description: <br/>
@@ -75,41 +76,37 @@ public class XMLMetaBean extends XMLFeaturesCapable {
     }
 
     public void addProperty(XMLMetaProperty property) {
-        if (properties == null)
-            properties = new ArrayList<XMLMetaProperty>();
+        if (properties == null) {
+            properties = new ArrayList<>();
+        }
         properties.add(property);
     }
 
     public void putProperty(XMLMetaProperty property) {
         if (property.getName() != null) {
-            XMLMetaProperty prop = findProperty(property.getName());
-            if (prop != null) {
-                properties.remove(prop);
+            Optional<XMLMetaProperty> prop = findProperty(property.getName());
+            if (prop.isPresent()) {
+                properties.remove(prop.get());
             }
         }
         addProperty(property);
     }
 
     public XMLMetaProperty removeProperty(String name) {
-        XMLMetaProperty prop = findProperty(name);
-        if (prop != null) {
-            properties.remove(prop);
+        Optional<XMLMetaProperty> prop = findProperty(name);
+        if (prop.isPresent()) {
+            properties.remove(prop.get());
         }
-        return prop;
+        return prop.orElse(null);
     }
 
     public XMLMetaProperty getProperty(String name) {
-        return findProperty(name);
+        return findProperty(name).orElse(null);
     }
 
-    private XMLMetaProperty findProperty(String name) {
-        if (properties == null)
-            return null;
-        for (XMLMetaProperty prop : properties) {
-            if (name.equals(prop.getName()))
-                return prop;
-        }
-        return null;
+    private Optional<XMLMetaProperty> findProperty(String name) {
+        return properties == null ? Optional.empty()
+            : properties.stream().filter(prop -> name.equals(prop.getName())).findFirst();
     }
 
     public List<XMLMetaBeanReference> getBeanRefs() {
@@ -121,41 +118,39 @@ public class XMLMetaBean extends XMLFeaturesCapable {
     }
 
     public void addBeanRef(XMLMetaBeanReference beanRelation) {
-        if (beanRelations == null)
-            beanRelations = new ArrayList<XMLMetaBeanReference>();
+        if (beanRelations == null) {
+            beanRelations = new ArrayList<>();
+        }
         beanRelations.add(beanRelation);
     }
 
     public void putBeanRef(XMLMetaBeanReference beanRelation) {
         if (beanRelation.getName() != null) {
-            XMLMetaBeanReference relation = findBeanRef(beanRelation.getName());
-            if (relation != null) {
-                beanRelations.remove(relation);
+            Optional<XMLMetaBeanReference> relation = findBeanRef(beanRelation.getName());
+            if (relation.isPresent()) {
+                beanRelations.remove(relation.get());
             }
         }
         addBeanRef(beanRelation);
     }
 
     public XMLMetaBeanReference removeBeanRef(String name) {
-        XMLMetaBeanReference relation = findBeanRef(name);
-        if (relation != null) {
-            beanRelations.remove(relation);
+        Optional<XMLMetaBeanReference> relation = findBeanRef(name);
+        if (relation.isPresent()) {
+            beanRelations.remove(relation.get());
         }
-        return relation;
+        return relation.orElse(null);
     }
 
     public XMLMetaBeanReference getBeanRef(String name) {
-        return findBeanRef(name);
+        return findBeanRef(name).orElse(null);
     }
 
-    private XMLMetaBeanReference findBeanRef(String name) {
-        if (beanRelations == null)
-            return null;
-        for (XMLMetaBeanReference relation : beanRelations) {
-            if (name.equals(relation.getName()))
-                return relation;
+    private Optional<XMLMetaBeanReference> findBeanRef(String name) {
+        if (beanRelations == null) {
+            return Optional.empty();
         }
-        return null;
+        return beanRelations.stream().filter(relation -> name.equals(relation.getName())).findFirst();
     }
 
 }

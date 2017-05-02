@@ -35,9 +35,6 @@ public class IOs {
         }
 
         // force ByteArrayOutputStream since we close the stream ATM
-        /*if (stream.markSupported()) {
-            return stream;
-        } else {*/
         try {
             final ByteArrayOutputStream baos = new ByteArrayOutputStream();
             final byte[] buffer = new byte[1024];
@@ -49,9 +46,9 @@ public class IOs {
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
-        /*}*/
     }
 
+    //TODO see if needed
     public static void closeQuietly(Closeable closeable) {
         if (closeable != null) {
             try {

@@ -43,6 +43,7 @@ public class PastValidatorForCalendar implements ConstraintValidator<Past, Calen
      * @return current date/time
      */
     protected Calendar now() {
+        // TODO use Clock
         return Calendar.getInstance();
     }
 }

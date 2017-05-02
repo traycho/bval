@@ -27,19 +27,19 @@ import javax.validation.metadata.GroupConversionDescriptor;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Description: MetaData class<br/>
  */
 public abstract class ElementDescriptorImpl implements ElementDescriptor {
-    private final Set<GroupConversionDescriptor> groupConversions =
-        new CopyOnWriteArraySet<GroupConversionDescriptor>();
+    private final Set<GroupConversionDescriptor> groupConversions = new CopyOnWriteArraySet<>();
     private boolean cascaded;
-    private final Collection<Object> validated = new CopyOnWriteArraySet<Object>();
+    private final Collection<Object> validated = new CopyOnWriteArraySet<>();
 
     /**
      * Get a set of {@link ConstraintDescriptor}s from the specified array of
@@ -49,13 +49,8 @@ public abstract class ElementDescriptorImpl implements ElementDescriptor {
      * @return {@link ConstraintDescriptor} set
      */
     protected static Set<ConstraintDescriptor<?>> getConstraintDescriptors(final Validation[] validations) {
-        final Set<ConstraintDescriptor<?>> result = new HashSet<ConstraintDescriptor<?>>(validations.length);
-        for (Validation validation : validations) {
-            if (validation instanceof ConstraintValidation<?>) {
-                result.add((ConstraintValidation<?>) validation);
-            }
-        }
-        return result;
+        return Stream.of(validations).filter(ConstraintValidation.class::isInstance)
+            .<ConstraintDescriptor<?>> map(ConstraintDescriptor.class::cast).collect(Collectors.toSet());
     }
 
     /** the MetaBean of this element */
@@ -66,7 +61,7 @@ public abstract class ElementDescriptorImpl implements ElementDescriptor {
 
     private Set<ConstraintDescriptor<?>> constraintDescriptors;
 
-    private final Map<Group, Group> groupMapping = new HashMap<Group, Group>();
+    private final Map<Group, Group> groupMapping = new HashMap<>();
 
     /**
      * Create a new ElementDescriptorImpl instance.
@@ -105,9 +100,9 @@ public abstract class ElementDescriptorImpl implements ElementDescriptor {
      * {@inheritDoc}
      */
     @Override
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ElementDescriptor.ConstraintFinder findConstraints() {
-        return new ConstraintFinderImpl(metaBean, new HashSet(constraintDescriptors));
+        return new ConstraintFinderImpl(metaBean, constraintDescriptors.stream()
+            .<ConstraintValidation<?>> map(ConstraintValidation.class::cast).collect(Collectors.toSet()));
     }
 
     /**
@@ -115,7 +110,7 @@ public abstract class ElementDescriptorImpl implements ElementDescriptor {
      */
     @Override
     public Set<ConstraintDescriptor<?>> getConstraintDescriptors() {
-        return constraintDescriptors.isEmpty() ? Collections.<ConstraintDescriptor<?>> emptySet()
+        return constraintDescriptors.isEmpty() ? Collections.emptySet()
             : Collections.unmodifiableSet(constraintDescriptors);
     }
 

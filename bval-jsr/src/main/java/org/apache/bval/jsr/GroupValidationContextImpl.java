@@ -44,7 +44,8 @@ import java.util.Set;
 /**
  * Description: instance per validation process, not thread-safe<br/>
  */
-final class GroupValidationContextImpl<T> extends BeanValidationContext<ConstraintValidationListener<T>>
+final class GroupValidationContextImpl<T>
+    extends BeanValidationContext<ConstraintValidationListener<T>, GraphBeanIdentity, Set<PathImpl>>
     implements GroupValidationContext<T>, MessageInterpolator.Context {
 
     private final MessageInterpolator messageResolver;
@@ -67,7 +68,7 @@ final class GroupValidationContextImpl<T> extends BeanValidationContext<Constrai
      * contains the validation constraints that have already been processed
      * during this validation routine (as part of a previous group match)
      */
-    private HashSet<ConstraintValidatorIdentity> validatedConstraints = new HashSet<ConstraintValidatorIdentity>();
+    private Set<ConstraintValidatorIdentity> validatedConstraints = new HashSet<>();
 
     private ConstraintValidation<?> constraintValidation;
     private final TraversableResolver traversableResolver;
@@ -90,7 +91,7 @@ final class GroupValidationContextImpl<T> extends BeanValidationContext<Constrai
     public GroupValidationContextImpl(ConstraintValidationListener<T> listener, MessageInterpolator aMessageResolver,
         TraversableResolver traversableResolver, ParameterNameProvider parameterNameProvider,
         ConstraintValidatorFactory constraintValidatorFactory, MetaBean rootMetaBean) {
-        super(listener, new HashMap<GraphBeanIdentity, Set<PathImpl>>());
+        super(listener, new HashMap<>());
         this.messageResolver = aMessageResolver;
         this.constraintValidatorFactory = constraintValidatorFactory;
         this.traversableResolver = CachingTraversableResolver.cacheFor(traversableResolver);
@@ -166,30 +167,21 @@ final class GroupValidationContextImpl<T> extends BeanValidationContext<Constrai
     /**
      * {@inheritDoc} Here, state equates to bean identity + group.
      */
-    @SuppressWarnings("unchecked")
     @Override
     public boolean collectValidated() {
-
         // Combination of bean+group+owner (owner is currently ignored)
-        GraphBeanIdentity gbi = new GraphBeanIdentity(getBean(), getCurrentGroup().getGroup(), getCurrentOwner());
+        final GraphBeanIdentity gbi = new GraphBeanIdentity(getBean(), getCurrentGroup().getGroup(), getCurrentOwner());
 
-        Set<PathImpl> validatedPathsForGBI = (Set<PathImpl>) validatedObjects.get(gbi);
-        if (validatedPathsForGBI == null) {
-            validatedPathsForGBI = new HashSet<PathImpl>();
-            validatedObjects.put(gbi, validatedPathsForGBI);
-        }
+        final Set<PathImpl> validatedPathsForGBI = validatedObjects.computeIfAbsent(gbi, k -> new HashSet<>());
 
         // If any of the paths is a subpath of the current path, there is a
         // circular dependency, so return false
-        for (PathImpl validatedPath : validatedPathsForGBI) {
-            if (path.isSubPathOf(validatedPath)) {
-                return false;
-            }
+        if (validatedPathsForGBI.stream().anyMatch(path::isSubPathOf)) {
+            return false;
         }
 
         // Else, add the currentPath to the set of validatedPaths
-        validatedPathsForGBI.add(PathImpl.copy(path));
-        return true;
+        return validatedPathsForGBI.add(PathImpl.copy(path));
     }
 
     /**
@@ -300,15 +292,11 @@ final class GroupValidationContextImpl<T> extends BeanValidationContext<Constrai
      */
     @Override
     public Object getValidatedValue() {
-        if (getMetaProperty() != null) {
-            return getPropertyValue(constraintValidation.getAccess());
-        } else {
-            return getBean();
-        }
+        return getMetaProperty() == null ? getBean() : getPropertyValue(constraintValidation.getAccess());
     }
 
     @Override
-    public <T> T unwrap(Class<T> type) {
+    public <U> U unwrap(Class<U> type) {
         if (type.isInstance(this)) {
             return type.cast(this);
         }

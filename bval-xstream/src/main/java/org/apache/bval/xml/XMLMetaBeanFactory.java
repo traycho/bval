@@ -41,8 +41,7 @@ public class XMLMetaBeanFactory implements MetaBeanFactory {
     private static final Logger logger = Logger.getLogger(XMLMetaBeanFactory.class.getName());
 
     // use LinkedHashMap to keep sequence of loaders
-    private final Map<XMLMetaBeanLoader, XMLMetaBeanInfos> resources =
-        new LinkedHashMap<XMLMetaBeanLoader, XMLMetaBeanInfos>();
+    private final Map<XMLMetaBeanLoader, XMLMetaBeanInfos> resources = new LinkedHashMap<>();
 
     private StandardValidation standardValidation = StandardValidation.getInstance();
 
@@ -72,8 +71,9 @@ public class XMLMetaBeanFactory implements MetaBeanFactory {
 
     @Override
     public void buildMetaBean(final MetaBean metaBean) throws Exception {
-        if (metaBean.getId() == null)
+        if (metaBean.getId() == null) {
             return;
+        }
         visitXMLBeanMeta(metaBean.getId(), new Visitor() {
             @Override
             public void visit(XMLMetaBean xmlMeta, XMLMetaBeanInfos xmlInfos) throws Exception {
@@ -112,9 +112,6 @@ public class XMLMetaBeanFactory implements MetaBeanFactory {
         if (result.xmlMeta.getName() != null) {
             meta.setName(result.xmlMeta.getName());
         }
-        /*        if (meta.getBeanClass() == null && result.xmlMeta.getImpl() != null) {
-            meta.setBeanClass(findLocalClass(result.xmlMeta.getImpl()));
-        }*/
         result.xmlMeta.mergeFeaturesInto(meta);
         enrichValidations(meta, result.xmlMeta, result, false);
         if (result.xmlMeta.getProperties() != null) {
@@ -136,7 +133,7 @@ public class XMLMetaBeanFactory implements MetaBeanFactory {
             // obsolete code? remove from here --->
             String[] func = prop.getFeature(JAVASCRIPT_VALIDATION_FUNCTIONS);
             List<String> jsValidators =
-                new ArrayList<String>(xmlProp.getValidators().size() + (func == null ? 0 : func.length));
+                new ArrayList<>(xmlProp.getValidators().size() + (func == null ? 0 : func.length));
             if (func != null && func.length > 0) {
                 jsValidators.addAll(Arrays.asList(func));
             } // <--- to here
@@ -158,9 +155,8 @@ public class XMLMetaBeanFactory implements MetaBeanFactory {
             if (!jsValidators.isEmpty()) {
                 prop.putFeature(JAVASCRIPT_VALIDATION_FUNCTIONS, jsValidators.toArray(new String[jsValidators.size()]));
             }
-            if (useStandard && standardValidation != null) {
-                if (!prop.hasValidation(standardValidation))
-                    prop.addValidation(standardValidation);
+            if (useStandard && standardValidation != null && !prop.hasValidation(standardValidation)) {
+                prop.addValidation(standardValidation);
             }
         } else if (addStandard && standardValidation != null && !prop.hasValidation(standardValidation)) {
             prop.addValidation(standardValidation);

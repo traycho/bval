@@ -61,8 +61,6 @@ public class Reflection {
         PRIMITIVE_WRAPPER_MAP.put(Void.TYPE, Void.TYPE);
     }
 
-
-
     /**
      * <p>Converts the specified primitive Class object to its corresponding
      * wrapper Class object.</p>
@@ -129,8 +127,7 @@ public class Reflection {
         return cl == null ? clazz.getClassLoader() : cl;
     }
 
-    public static Class<?> toClass(String className) throws ClassNotFoundException
-    {
+    public static Class<?> toClass(String className) throws ClassNotFoundException {
         ClassLoader cl = getClassLoader(Reflection.class);
         return toClass(className, cl);
     }
@@ -142,7 +139,7 @@ public class Reflection {
      *
      * @throws RuntimeException on load error
      */
-    public static Class toClass(String className, ClassLoader loader) throws ClassNotFoundException {
+    public static Class<?> toClass(String className, ClassLoader loader) throws ClassNotFoundException {
         return toClass(className, false, loader);
     }
 
@@ -153,7 +150,7 @@ public class Reflection {
      *
      * @throws RuntimeException on load error
      */
-    public static Class toClass(String className, boolean resolve, ClassLoader loader) throws ClassNotFoundException {
+    public static Class<?> toClass(String className, boolean resolve, ClassLoader loader) throws ClassNotFoundException {
         if (className == null) {
             throw new NullPointerException("className == null");
         }
@@ -171,7 +168,7 @@ public class Reflection {
             for (int i = 0; !primitive && (i < NATIVE_CODES.length); i++) {
                 if (NATIVE_CODES[i][1].equals(className)) {
                     if (dims == 0) {
-                        return (Class) NATIVE_CODES[i][0];
+                        return (Class<?>) NATIVE_CODES[i][0];
                     }
                     className = (String) NATIVE_CODES[i][2];
                     primitive = true;
